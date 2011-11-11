@@ -48,11 +48,10 @@ def post(request):
     if is_invalid:
         return HttpResponse("0")
         
-    article, created = Article.objects.get_or_create(url = data['url'])
-    if created:
-        article.body = data['body']
-        article.published_on = data['published_on']
-        article.title = data['title']
+    try:
+        article = Article.objects.get(url = data['url'])
+    except Article.DoesNotExist:
+        article = Article(url = data['url'], body = data['body'], published_on = data['published_on'], title = data['title'])
         article.save()
     
     return HttpResponse('1')
