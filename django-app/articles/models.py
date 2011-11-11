@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 # Create your models here.
 class Article(models.Model):
@@ -6,6 +7,7 @@ class Article(models.Model):
     url = models.URLField()
     body = models.TextField()
     published_on = models.DateTimeField()
+    users = models.ManyToManyField(User)
     
     def __unicode__(self):
         return self.url

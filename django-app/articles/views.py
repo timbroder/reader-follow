@@ -11,6 +11,7 @@ import datetime
 import settings
 import time
 from models import *
+from django.views.decorators.csrf import csrf_exempt
 #from pprint import pprint
 
 debug = getattr(settings, 'DEBUG', None)
@@ -38,6 +39,20 @@ def invalid_post(data):
         return "Error: missing" + invalid.strip(',')
     return None
 
+def convert_publish_date(in_string):
+    in_format = "%b %d, %Y %I:%M %p"
+    out_format = "%b %d, %Y %I:%M %p"
+    in_converted = time.strptime(in_string,in_format)
+    out_converted = time.strftime("%Y-%m-%d %H:%M", in_converted)
+    return out_converted
+
+#{
+#    "url": "http: //www.google.com",
+#    "body": "mybody",
+#    "published_on": "Nov 1, 2011 2:24 PM",
+#    "title": "my_title"
+#}
+@csrf_exempt
 def post(request):
     if request.method != 'POST':
         return HttpResponseNotFound('<h1>expecting post</h1>')
@@ -51,7 +66,8 @@ def post(request):
     try:
         article = Article.objects.get(url = data['url'])
     except Article.DoesNotExist:
-        article = Article(url = data['url'], body = data['body'], published_on = data['published_on'], title = data['title'])
+        published_on = convert_publish_date(data['published_on'])
+        article = Article(url = data['url'], body = data['body'], published_on = published_on, title = data['title'])
         article.save()
     
     return HttpResponse('1')
