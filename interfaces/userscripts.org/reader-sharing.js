@@ -108,7 +108,7 @@ ReaderSharing.prototype = {
 function showStatus(rsp) {
 	$.notty({
         content : rsp.responseText,
-        timeout: 3000
+        //timeout: 3000
      });
 }
 
@@ -211,7 +211,7 @@ $.ajaxSetup({
 **/
 
 var style = "#nottys{position:fixed;top:20px;right:20px;width:280px;z-index:999}" +
-"#nottys .notty{margin-bottom:20px;color:#FFF;text-shadow:#000 0 1px 2px;font:normal 12px/17px Helvetica;border:1px solid rgba(0,0,0,0.7);background:0 transparent), 0 rgba(0,0,0,0.4));-webkit-border-radius:6px;-moz-border-radius:6px;border-radius:6px;-webkit-box-shadow:rgba(0,0,0,0.8) 0 2px 13px rgba(0,0,0,0.6) 0 -3px 13px rgba(255,255,255,0.5) 0 1px 0 inset;-moz-box-shadow:rgba(0,0,0,0.8) 0 2px 13px rgba(0,0,0,0.6) 0 -3px 13px rgba(255,255,255,0.5) 0 1px 0 inset;box-shadow:rgba(0,0,0,0.8) 0 2px 13px rgba(0,0,0,0.6) 0 -3px 13px rgba(255,255,255,0.5) 0 1px 0 inset;position:relative;cursor:default;-webkit-user-select:none;-moz-user-select:none;overflow:hidden;_overflow:visible;_zoom:1;padding:10px}" +
+"#nottys .notty{margin-bottom:20px;color:#FFF;text-shadow:#000 0 1px 2px;font:normal 12px/17px Helvetica;border:1px solid rgba(0,0,0,0.7);background:0 transparent), 0 rgba(0,0,0,0.4));-webkit-border-radius:6px;-moz-border-radius:6px;border-radius:6px;-webkit-box-shadow:rgba(0,0,0,0.8) 0 2px 13px rgba(0,0,0,0.6) 0 -3px 13px rgba(255,255,255,0.5) 0 1px 0 inset;-moz-box-shadow:rgba(0,0,0,0.8) 0 2px 13px rgba(0,0,0,0.6) 0 -3px 13px rgba(255,255,255,0.5) 0 1px 0 inset;box-shadow:rgba(0,0,0,0.8) 0 2px 13px rgba(0,0,0,0.6) 0 -3px 13px rgba(255,255,255,0.5) 0 1px 0 inset;position:relative;cursor:default;-webkit-user-select:none;-moz-user-select:none;overflow:hidden;_overflow:visible;_zoom:1;padding:10px;background:black}" +
 ".pop{-webkit-animation-duration:.5s;-webkit-animation-iteration-count:1;-webkit-animation-name:pop;-webkit-animation-timing-function:ease-in}" +
 ".remove{-webkit-animation-iteration-count:1;-webkit-animation-timing-function:ease-in-out;-webkit-animation-duration:.3s;-webkit-animation-name:remove}" +
 "#nottys .notty.click{cursor:pointer}" +
