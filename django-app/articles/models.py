@@ -14,6 +14,9 @@ class Article(models.Model):
     def __unicode__(self):
         return self.url
     
+    def get_absolute_url(self):
+        return self.url
+    
 class UserProfile(models.Model):
     user = models.OneToOneField(User)
     auth_key = models.CharField(max_length=64, unique=True)
@@ -31,11 +34,17 @@ class UserProfile(models.Model):
         except:
             self.social_auth = None
         self.save()
+        
+    def get_absolute_url(self):
+        return "/shared/%s/" % (self.user.email)
 
 class Shared(models.Model):
     article = models.ForeignKey(Article)
     userprofile = models.ForeignKey(UserProfile)
     shared_on = models.DateTimeField()
+    
+    class Meta:
+        ordering = ["-shared_on"]
     
     def __unicode__(self):
         return "%s - %s" % (self.userprofile, self.article)
@@ -63,3 +72,4 @@ class GoogleContact:
 utils.register(User)    
 
 import signals
+import feeds

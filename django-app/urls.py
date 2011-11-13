@@ -4,12 +4,14 @@ from django.contrib import admin
 admin.autodiscover()
 
 from articles import views as articles
+from articles import feeds
 
 urlpatterns = patterns('',
     url(r'^admin/', include(admin.site.urls)),
     
     (r'^follow/(?P<email>.+)/$', articles.follow),
     (r'^unfollow/(?P<email>.+)/$', articles.unfollow),
+    (r'^shared/(?P<email>.+)/$', feeds.UsersSharedFeed()),
     
     (r'^post/$', articles.post),
     (r'^get/(?P<article_id>\d+)/$', articles.get),
