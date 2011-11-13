@@ -164,6 +164,31 @@ LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 AUTH_PROFILE_MODULE = 'articles.UserProfile'
 
+AUTHENTICATION_BACKENDS = (
+    'social_auth.backends.twitter.TwitterBackend',
+    'social_auth.backends.facebook.FacebookBackend',
+    'social_auth.backends.google.GoogleOAuthBackend',
+    'social_auth.backends.google.GoogleOAuth2Backend',
+    'social_auth.backends.google.GoogleBackend',
+    'social_auth.backends.yahoo.YahooBackend',
+    'social_auth.backends.contrib.linkedin.LinkedinBackend',
+    'social_auth.backends.contrib.livejournal.LiveJournalBackend',
+    'social_auth.backends.contrib.orkut.OrkutBackend',
+    'social_auth.backends.contrib.foursquare.FoursquareBackend',
+    'social_auth.backends.contrib.github.GithubBackend',
+    'social_auth.backends.contrib.dropbox.DropboxBackend',
+    'social_auth.backends.contrib.flickr.FlickrBackend',
+    'social_auth.backends.OpenIDBackend',
+    'django.contrib.auth.backends.ModelBackend',
+)
+
+SOCIAL_AUTH_ENABLED_BACKENDS = ('google-oauth2')
+GOOGLE_OAUTH_EXTRA_SCOPE = ['http://www.google.com/m8/feeds',]
+SOCIAL_AUTH_DEFAULT_USERNAME = 'new_social_auth_user'
+SOCIAL_AUTH_UUID_LENGTH = 16
+#SOCIAL_AUTH_SESSION_EXPIRATION = False
+SOCIAL_AUTH_ASSOCIATE_BY_MAIL = True
+
 try:
     from localsettings import *
 except ImportError:
