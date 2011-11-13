@@ -111,6 +111,15 @@ def print_contacts(contacts):
     for contact in contacts:
         print contact
 
+#lazy, make class based view
+def check_email(email):
+    nope = ['facebook.com', 'aol.com']
+    for no in nope:
+        if no in email:
+            return False
+    
+    return True
+
 def get_contacts(user):
     auth = UserSocialAuth.objects.get(user=user)
     gd_client = service.ContactsService()
@@ -135,13 +144,14 @@ def get_contacts(user):
     for entry in entries:
         for email in entry.email:
             if email.primary and email.address and entry.title:
-                #if 'gmail.com' in email.address:
-                contact = GoogleContact(entry.title.text, email.address)
-                contacts.append(contact)    
+                if check_email(email.address):
+                    contact = GoogleContact(entry.title.text, email.address)
+                    contacts.append(contact)    
         #print 'Updated on %s' % contact.updated.text
     contacts = sorted(contacts, key=lambda k: k.name) 
     
     return contacts
+
 
 def contacts(request):
     user = request.user
