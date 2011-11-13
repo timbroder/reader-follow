@@ -19,6 +19,7 @@ class UserProfile(models.Model):
     auth_key = models.CharField(max_length=64, unique=True)
     is_signed_up = models.BooleanField(default=False)
     social_auth = models.ForeignKey('social_auth.UserSocialAuth', blank=True, null=True)
+    articles = models.ManyToManyField(Article, through='Shared')
     
     def __unicode__(self):
         return self.user.username
@@ -30,7 +31,15 @@ class UserProfile(models.Model):
         except:
             self.social_auth = None
         self.save()
+
+class Shared(models.Model):
+    article = models.ForeignKey(Article)
+    userprofile = models.ForeignKey(UserProfile)
+    shared_on = models.DateTimeField()
     
+    def __unicode__(self):
+        return "%s - %s" % (self.userprofile, self.article)
+  
 class GoogleContact:
     name = ''
     email = ''

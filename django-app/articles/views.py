@@ -55,7 +55,8 @@ def convert_publish_date(in_string):
 #    "url": "http: //www.google.com",
 #    "body": "mybody",
 #    "published_on": "Nov 1, 2011 2:24 PM",
-#    "title": "my_title"
+#    "title": "my_title",
+#    "auth": "021cf1a61bd8a2e1b1bc108932110340"
 #}
 @csrf_exempt
 def post(request):
@@ -72,8 +73,22 @@ def post(request):
         article = Article.objects.get(url = data['url'])
     except Article.DoesNotExist:
         published_on = convert_publish_date(data['published_on'])
-        article = Article(url = data['url'], body = data['body'], published_on = published_on, title = data['title'])
+        article = Article(url = data['url'], 
+                          body = data['body'], 
+                          published_on = published_on, 
+                          title = data['title']
+                          )
         article.save()
+        
+    try:
+        profile = UserProfile.objects.get(auth_key=data['auth'])
+        shared = Shared(article=article,
+                        userprofile=profile,
+                        shared_on=datetime.datetime.now()
+                        )
+        shared.save()
+    except:
+        return HttpResponse('0')
     
     return HttpResponse('1')
     
