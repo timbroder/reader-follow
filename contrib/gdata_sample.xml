@@ -1,0 +1,22 @@
+<ns0:entry xmlns:ns0="http://www.w3.org/2005/Atom" xmlns:ns1="http://schemas.google.com/g/2005">
+	<ns0:category scheme="http://schemas.google.com/g/2005#kind"
+		term="http://schemas.google.com/contact/2008#contact" />
+	<ns0:id>http://www.google.com/m8/feeds/contacts/timothy.broder%40gmail.com/base/e98bce9094772a7
+	</ns0:id>
+	<ns0:updated>2011-11-02T18:15:19.310Z</ns0:updated>
+	<ns0:title type="text" />
+	<ns0:link
+		href="http://www.google.com/m8/feeds/photos/media/timothy.broder%40gmail.com/e98bce9094772a7/dTJqiR7b08SPFB0lJnGJHQ"
+		rel="http://schemas.google.com/contacts/2008/rel#edit-photo" type="image/*" />
+	<ns0:link
+		href="http://www.google.com/m8/feeds/photos/media/timothy.broder%40gmail.com/e98bce9094772a7"
+		rel="http://schemas.google.com/contacts/2008/rel#photo" type="image/*" />
+	<ns0:link
+		href="http://www.google.com/m8/feeds/contacts/timothy.broder%40gmail.com/full/e98bce9094772a7"
+		rel="self" type="application/atom+xml" />
+	<ns0:link
+		href="http://www.google.com/m8/feeds/contacts/timothy.broder%40gmail.com/full/e98bce9094772a7/1320257719310001"
+		rel="edit" type="application/atom+xml" />
+	<ns1:email address="john.m.bender@gmail.com" primary="true"
+		rel="http://schemas.google.com/g/2005#other" />
+</ns0:entry>

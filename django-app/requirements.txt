@@ -1,0 +1,8 @@
+python-openid
+oauth2
+gdata
+django-social-auth
+django-openid-consume
+django-evolution
+django-extensions
+django-follow

@@ -12,8 +12,9 @@ import settings
 import time
 from models import *
 from django.views.decorators.csrf import csrf_exempt
+from social_auth.models import UserSocialAuth
 #from pprint import pprint
-
+from gdata.contacts import service, client
 debug = getattr(settings, 'DEBUG', None)
 
 #def dump(obj):
@@ -77,3 +78,61 @@ def get(request, article_id):
     article = get_object_or_404(Article, id = article_id)
     data = serializers.serialize("json", [article, ])
     return HttpResponse(data)
+
+def print_contacts(contacts):
+    for contact in contacts:
+        print contact
+
+def get_contacts(user):
+    auth = UserSocialAuth.objects.get(user=user)
+    gd_client = service.ContactsService()
+    gd_client.debug = 'true'
+    gd_client.SetAuthSubToken(auth.extra_data['access_token'])
+    #feed = gd_client.GetContactsFeed()
+    #for i, entry in enumerate(feed.entry):
+    #    print '\n%s %s' % (i+1, entry)
+    
+    #uri = "%s?updated-min=2007-03-16T00:00:00&max-results=500&orderby=lastmodified&sortorder=descending" % gd_client.GetFeedUri()
+    contacts = []
+    entries = []
+    uri = "%s?updated-min=2007-03-16T00:00:00&max-results=500&q=gmail.com" % gd_client.GetFeedUri()
+    feed = gd_client.GetContactsFeed(uri)
+    next_link = feed.GetNextLink()
+    entries.extend(feed.entry)
+    
+    while next_link:
+        feed = gd_client.GetContactsFeed(uri=next_link.href)
+        entries.extend(feed.entry)
+        next_link = feed.GetNextLink()
+    for entry in entries:
+        for email in entry.email:
+            if email.primary and email.address and entry.title:
+                #if 'gmail.com' in email.address:
+                contact = GoogleContact(entry.title.text, email.address)
+                contacts.append(contact)    
+        #print 'Updated on %s' % contact.updated.text
+    contacts = sorted(contacts, key=lambda k: k.name) 
+    
+    return contacts
+
+def contacts(request):
+    user = request.user
+    if not user.is_authenticated():
+        return r2r('login.html', {})
+    else:
+        if request.session.get('google_contacts_cached'):
+            contacts = request.session.get('google_contacts_cached')
+        else:
+            contacts = get_contacts(user)
+            request.session['google_contacts_cached'] = contacts
+            
+        contact_emails = [contact.email for contact in contacts]
+        signed_up = User.objects.filter(userprofile__is_signed_up = True, userprofile__social_auth__uid__in = contact_emails)
+        signed_up_emails = [user.email for user in signed_up]
+        print signed_up_emails
+        
+        return r2r('index.html', { 'contacts': contacts,
+                                   'signed_up_emails': signed_up_emails })
+    
+def home(request):
+    return contacts(request)

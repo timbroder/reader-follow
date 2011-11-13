@@ -45,7 +45,7 @@ USE_L10N = True
 
 # Absolute filesystem path to the directory that will hold user-uploaded files.
 # Example: "/home/media/media.lawrence.com/media/"
-MEDIA_ROOT = ''
+MEDIA_ROOT = 'C:/Users/tbroder/workspace/reader-follow/django-app/static/'
 
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash.
@@ -60,7 +60,7 @@ STATIC_ROOT = ''
 
 # URL prefix for static files.
 # Example: "http://media.lawrence.com/static/"
-STATIC_URL = '/static/'
+STATIC_URL = ''
 
 # URL prefix for admin static files -- CSS, JavaScript and images.
 # Make sure to use a trailing slash.
@@ -98,6 +98,8 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    #'django_authopenid.middleware.OpenIDMiddleware',
+    'openid_consumer.middleware.OpenIDMiddleware',
 )
 
 ROOT_URLCONF = 'urls'
@@ -116,7 +118,13 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.admin',
-    'articles'
+    'articles',
+    'social_auth',
+    #'socialauth',
+    #'openid_consumer',
+    'django_evolution',
+    'django_extensions',
+    'follow',
 )
 
 # A sample logging configuration. The only tangible logging
@@ -141,3 +149,22 @@ LOGGING = {
         },
     }
 }
+
+TEMPLATE_CONTEXT_PROCESSORS = (
+            'django.contrib.auth.context_processors.auth',
+            'django.core.context_processors.debug',
+            'django.core.context_processors.i18n',
+            'django.core.context_processors.media',
+            'django.core.context_processors.request',
+            'social_auth.context_processors.social_auth_by_type_backends',
+           # 'django_authopenid.context_processors.authopenid',
+        )
+
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
+AUTH_PROFILE_MODULE = 'articles.UserProfile'
+
+try:
+    from localsettings import *
+except ImportError:
+    pass

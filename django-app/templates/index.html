@@ -1,0 +1,39 @@
+
+{% extends 'base.html' %}
+
+{% block title%}Home{% endblock %}
+
+{% block content %}
+<div style="width: 700px">
+	<table id="contacts">
+		<thead>
+			<tr>
+				<th>Follow</th>
+				<th>Member</th>
+				<th>Name</th>
+				<th>Email</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for contact in contacts %}
+			<tr>
+				<td>Follow</td>
+				<td>{% if contact.email in signed_up_emails %}X{% endif %}</td>
+				<td>{{ contact.name }}</td>
+				<td>{{ contact.email }}</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+</div>
+{% endblock %}
+
+{% block extrajs %}
+	<script src="http://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.8.13/jquery-ui.min.js"></script>
+    <script src="/media/js/jquery.dataTables.min.js"></script>
+    <script src="/media/js/contacts.js"></script>
+{% endblock %}
+
+{% block extracss %}
+<link rel="stylesheet" href="/media/css/redmond/jquery-ui-1.8.16.custom.css">
+{% endblock %}
