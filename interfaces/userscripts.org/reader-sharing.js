@@ -108,7 +108,7 @@ ReaderSharing.prototype = {
 function showStatus(rsp) {
 	$.notty({
         content : rsp.responseText,
-        //timeout: 3000
+        timeout: 3000
      });
 }
 
