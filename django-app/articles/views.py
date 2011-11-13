@@ -157,16 +157,17 @@ def contacts(request):
         contact_emails = [contact.email for contact in contacts]
         
         signed_up = User.objects.filter(userprofile__is_signed_up = True, userprofile__social_auth__uid__in = contact_emails)
-        signed_up_emails = [user.email for user in signed_up]
+        signed_up_emails = [usr.email for usr in signed_up]
         
         following = Follow.objects.filter(user=user)
         for f in Follow.objects.all():
             print f.target
-        following_emails = [user.target.email for user in following]
-        
+        following_emails = [usr.target.email for usr in following]
+
         return r2r('index.html', { 'contacts': contacts,
                                    'signed_up_emails': signed_up_emails,
-                                   'following_emails': following_emails })
+                                   'following_emails': following_emails,
+                                   'user': user })
     
 def home(request):
     return contacts(request)

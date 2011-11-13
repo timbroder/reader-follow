@@ -4,6 +4,10 @@
 {% block title%}Home{% endblock %}
 
 {% block content %}
+<div>
+	<p>Everyone you follow: <a href="/feed/{{ user.email }}/{{ user.get_profile.auth_key }}/">Feed</a></p>
+	<p>Auth Key: {{ user.get_profile.auth_key }}</p>
+</div>
 <div style="width: 700px">
 	<table id="contacts">
 		<thead>
@@ -12,6 +16,7 @@
 				<th>Member</th>
 				<th>Name</th>
 				<th>Email</th>
+				<th>Feed</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -27,6 +32,7 @@
 				<td>{% if contact.email in signed_up_emails %}X{% endif %}</td>
 				<td>{{ contact.name }}</td>
 				<td>{{ contact.email }}</td>
+				<td>{% if contact.email in signed_up_emails %}<a href="/shared/{{ contact.email }}/">feed</a>{% endif %}</td>
 			</tr>
 			{% endfor %}
 		</tbody>
