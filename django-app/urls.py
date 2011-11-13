@@ -12,6 +12,7 @@ urlpatterns = patterns('',
     (r'^follow/(?P<email>.+)/$', articles.follow),
     (r'^unfollow/(?P<email>.+)/$', articles.unfollow),
     (r'^shared/(?P<email>.+)/$', feeds.UsersSharedFeed()),
+    (r'^feed/(?P<email>.+)/(?P<auth_key>.+)/$', feeds.UsersSharedFeed()),
     
     (r'^post/$', articles.post),
     (r'^get/(?P<article_id>\d+)/$', articles.get),

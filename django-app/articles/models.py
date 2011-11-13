@@ -2,6 +2,8 @@ from django.db import models
 from django.contrib.auth.models import User
 from social_auth.models import UserSocialAuth
 from follow import utils
+import simplejson
+from django.http import HttpResponse
 
 # Create your models here.
 class Article(models.Model):
@@ -68,6 +70,14 @@ class GoogleContact:
     
     def __str__(self):
         return self.__unicode__()
+
+class JsonpResponse(HttpResponse):
+    def __init__(self, data, callback):
+        json = simplejson.dumps(data)
+        jsonp = "%s(%s)" % (callback, json)
+        HttpResponse.__init__( self, jsonp,
+                               mimetype='application/json'
+                               )
     
 utils.register(User)    
 

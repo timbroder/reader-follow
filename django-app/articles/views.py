@@ -18,6 +18,7 @@ from gdata.contacts import service, client
 from follow import utils
 from follow.models import Follow
 from django.shortcuts import redirect
+import json 
 
 debug = getattr(settings, 'DEBUG', None)
 
@@ -45,7 +46,9 @@ def invalid_post(data):
     return None
 
 def convert_publish_date(in_string):
-    in_format = "%b %d, %Y %I:%M %p"
+    return datetime.datetime.now()
+    in_string = in_string.split(" (")[0]
+    in_format = "%b %d, %Y" # %I:%M %p"
     out_format = "%b %d, %Y %I:%M %p"
     in_converted = time.strptime(in_string,in_format)
     out_converted = time.strftime("%Y-%m-%d %H:%M", in_converted)
@@ -60,11 +63,10 @@ def convert_publish_date(in_string):
 #}
 @csrf_exempt
 def post(request):
-    if request.method != 'POST':
-        return HttpResponseNotFound('<h1>expecting post</h1>')
-    
-    data = simplejson.loads(request.raw_post_data)
-    
+    #if request.method != 'POST':
+    #    return HttpResponseNotFound('<h1>expecting post</h1>')
+    #data = simplejson.loads(request.raw_post_data)
+    data = request.GET
     is_invalid = invalid_post(data)
     if is_invalid:
         return HttpResponse("0")
@@ -79,18 +81,25 @@ def post(request):
                           title = data['title']
                           )
         article.save()
-        
+      
     try:
         profile = UserProfile.objects.get(auth_key=data['auth'])
+    except:
+        return JsonpResponse({"response":'bad auth key'}, request.GET['callback'])
+
+    try:
+        shared = Shared.objects.get(article=article,
+                        userprofile=profile
+                        )
+        #already shared
+        return JsonpResponse({"response":'already shared'}, request.GET['callback'])
+    except Exception as e:
         shared = Shared(article=article,
                         userprofile=profile,
                         shared_on=datetime.datetime.now()
                         )
         shared.save()
-    except:
-        return HttpResponse('0')
-    
-    return HttpResponse('1')
+    return JsonpResponse({"response":'1'}, request.GET['callback'])
     
     
 def get(request, article_id):
@@ -151,16 +160,9 @@ def contacts(request):
         signed_up_emails = [user.email for user in signed_up]
         
         following = Follow.objects.filter(user=user)
-        print 'start'
-        print user
         for f in Follow.objects.all():
             print f.target
-        print following
         following_emails = [user.target.email for user in following]
-        print following_emails
-        print '!'
-        
-        print signed_up_emails
         
         return r2r('index.html', { 'contacts': contacts,
                                    'signed_up_emails': signed_up_emails,
