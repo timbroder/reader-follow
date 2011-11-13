@@ -18,3 +18,18 @@ class UsersSharedFeed(Feed):
     def items(self, obj):
         return obj.articles.all()[:30]
     
+class FollowingFeed(Feed):
+    def get_object(self, request, email, auth_key):
+        return get_object_or_404(UserProfile, user__email=email)
+    
+    def title(self, obj):
+        return "%s's shared items" % obj.user.username
+
+    def link(self, obj):
+        return obj.get_absolute_url()
+    
+    def description(self, obj):
+        return "Shared on Google Reader"
+
+    def items(self, obj):
+        return obj.articles.all()[:30]
