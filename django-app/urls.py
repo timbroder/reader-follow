@@ -7,12 +7,12 @@ from articles import views as articles
 
 urlpatterns = patterns('',
     url(r'^admin/', include(admin.site.urls)),
-    #(r'^accounts/', include('django_authopenid.urls')),
-    #(r'^accounts/', include('socialauth.urls')),
+    
+    (r'^follow/(?P<email>.+)/$', articles.follow),
+    (r'^unfollow/(?P<email>.+)/$', articles.unfollow),
     
     (r'^post/$', articles.post),
     (r'^get/(?P<article_id>\d+)/$', articles.get),
-    #(r'^$', 'socialauth.views.signin_complete'),
     url(r'', include('social_auth.urls')),
     url('^', include('follow.urls')),
     (r'^$', articles.home),

@@ -15,6 +15,10 @@ from django.views.decorators.csrf import csrf_exempt
 from social_auth.models import UserSocialAuth
 #from pprint import pprint
 from gdata.contacts import service, client
+from follow import utils
+from follow.models import Follow
+from django.shortcuts import redirect
+
 debug = getattr(settings, 'DEBUG', None)
 
 #def dump(obj):
@@ -127,12 +131,56 @@ def contacts(request):
             request.session['google_contacts_cached'] = contacts
             
         contact_emails = [contact.email for contact in contacts]
+        
         signed_up = User.objects.filter(userprofile__is_signed_up = True, userprofile__social_auth__uid__in = contact_emails)
         signed_up_emails = [user.email for user in signed_up]
+        
+        following = Follow.objects.filter(user=user)
+        print 'start'
+        print user
+        for f in Follow.objects.all():
+            print f.target
+        print following
+        following_emails = [user.target.email for user in following]
+        print following_emails
+        print '!'
+        
         print signed_up_emails
         
         return r2r('index.html', { 'contacts': contacts,
-                                   'signed_up_emails': signed_up_emails })
+                                   'signed_up_emails': signed_up_emails,
+                                   'following_emails': following_emails })
     
 def home(request):
     return contacts(request)
+
+#make current user follow
+def follow(request, email):
+    user = request.user
+    
+    following, created = User.objects.get_or_create(email=email)
+    if created:
+        following.username = email
+        following.save()
+    
+    utils.follow(user, following)
+        
+    return redirect('/')
+
+def unfollow(request, email):
+    user = request.user
+    
+    following, created = User.objects.get_or_create(email=email)
+    if created:
+        following.username = email
+        following.save()
+    
+    try:
+        utils.unfollow(user, following)
+    except:
+        pass
+        
+    return redirect('/')
+    
+    
+    

@@ -17,7 +17,13 @@
 		<tbody>
 			{% for contact in contacts %}
 			<tr>
-				<td>Follow</td>
+				<td>
+					{% if contact.email in following_emails %}
+						<a href="/unfollow/{{ contact.email }}/">Unfollow</a>
+					{% else %}
+						<a href="/follow/{{ contact.email }}/">Follow</a>
+					{% endif %}
+				</td>
 				<td>{% if contact.email in signed_up_emails %}X{% endif %}</td>
 				<td>{{ contact.name }}</td>
 				<td>{{ contact.email }}</td>
