@@ -39,6 +39,9 @@ class UserProfile(models.Model):
         
     def get_absolute_url(self):
         return "/shared/%s/" % (self.user.email)
+    
+    def get_agg_share_url(self):
+        return "/feed/%s/%s/" % (self.user.email, self.auth_key)
 
 class Shared(models.Model):
     article = models.ForeignKey(Article)
