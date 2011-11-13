@@ -85,21 +85,21 @@ def post(request):
     try:
         profile = UserProfile.objects.get(auth_key=data['auth'])
     except:
-        return JsonpResponse({"response":'bad auth key'}, request.GET['callback'])
+        return HttpResponse('bad auth key')
 
     try:
         shared = Shared.objects.get(article=article,
                         userprofile=profile
                         )
         #already shared
-        return JsonpResponse({"response":'already shared'}, request.GET['callback'])
+        return HttpResponse('already shared')
     except Exception as e:
         shared = Shared(article=article,
                         userprofile=profile,
                         shared_on=datetime.datetime.now()
                         )
         shared.save()
-    return JsonpResponse({"response":'1'}, request.GET['callback'])
+    return HttpResponse("shared: %s" % article.title)
     
     
 def get(request, article_id):
