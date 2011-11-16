@@ -4,6 +4,7 @@ $(document).ready(function() {
 		"sScrollY": "400px",
         "bPaginate": false,
         "bStateSave": true,
-        "aaSorting": [[2,'asc']]
+        "aaSorting": [[2,'asc']],
+        "bProcessing": true
 	} );
 } );
