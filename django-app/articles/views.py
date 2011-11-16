@@ -197,7 +197,7 @@ def follow(request, email):
     if waffle.flag_is_active(request, 'followemail'):
         msg = """
         Remember when Google removed following and sharing from reader?  Do you want them back?
-        It's easy! Check out <a href="http://readersharing.net">http://readersharing.net</a>
+        It's easy! Check out http://readersharing.net
         
         %s is now following you on Google Reader
         
