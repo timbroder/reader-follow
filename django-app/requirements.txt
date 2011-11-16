@@ -10,3 +10,4 @@ simplejson
 django-waffle
 boto
 django-ses
+google-django-analytics

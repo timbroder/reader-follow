@@ -128,6 +128,7 @@ INSTALLED_APPS = (
     'follow',
     'waffle', 
     'django_ses',
+    'google_analytics',
 )
 
 # A sample logging configuration. The only tangible logging
@@ -195,6 +196,8 @@ SOCIAL_AUTH_UUID_LENGTH = 16
 SOCIAL_AUTH_ASSOCIATE_BY_MAIL = True
 
 EMAIL_BACKEND = 'django_ses.SESBackend'
+
+GOOGLE_ANALYTICS_MODEL = True
 
 try:
     from localsettings import *
