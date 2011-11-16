@@ -127,6 +127,7 @@ INSTALLED_APPS = (
     'django_extensions',
     'follow',
     'waffle', 
+    'django_ses',
 )
 
 # A sample logging configuration. The only tangible logging

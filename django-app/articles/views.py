@@ -210,7 +210,7 @@ def follow(request, email):
         #print [following.email]
         send_mail(subject % user.username, 
                   msg % user.username, 
-                  'follow@readerfollow.net',
+                  'follow@readersharing.net',
                   [following.email], 
                   fail_silently=False)
         
