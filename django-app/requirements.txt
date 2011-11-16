@@ -8,3 +8,5 @@ django-extensions
 django-follow
 simplejson
 django-waffle
+boto
+django-ses
