@@ -1,7 +1,5 @@
 {% extends 'base.html' %}
 
-{% block title%}Login{% endblock %}
-
 {% block content %}
 <div>
 	<p><a href="/login/google-oauth2/">login</a></p>
@@ -18,4 +16,9 @@
 	</ol>
 	
 </div>
+{% include "_share.html" %}
+{% endblock %}
+
+{% block extrajs %}
+<script type="text/javascript">var switchTo5x=false;</script><script type="text/javascript" src="http://w.sharethis.com/button/buttons.js"></script><script type="text/javascript">stLight.options({publisher:'8b0d8d39-af64-4ca7-a322-608a6836b7d1'});</script>
 {% endblock %}
