@@ -26,7 +26,7 @@ def gen_auth_key(sender, instance, created, **kwargs):
     
     if not profile.auth_key:
         new_key = random_md5like_hash()
-        print new_key
+
         while UserProfile.objects.filter(auth_key=new_key).count() > 0:
             new_key = random_md5like_hash()
         profile.auth_key = new_key
@@ -37,9 +37,9 @@ def gen_auth_key(sender, instance, created, **kwargs):
     
 
     
-@receiver(post_save, sender=UserSocialAuth)
-def assoc_social(sender, instance, created, **kwargs):
-    print 'social'
+#@receiver(post_save, sender=UserSocialAuth)
+#def assoc_social(sender, instance, created, **kwargs):
+#    print 'social'
         
 @receiver(user_logged_in)
 def set_signed_up(sender, user, request, **kwargs):

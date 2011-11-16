@@ -100,6 +100,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
     #'django_authopenid.middleware.OpenIDMiddleware',
     'openid_consumer.middleware.OpenIDMiddleware',
+    'waffle.middleware.WaffleMiddleware',
 )
 
 ROOT_URLCONF = 'urls'
@@ -125,6 +126,7 @@ INSTALLED_APPS = (
     'django_evolution',
     'django_extensions',
     'follow',
+    'waffle', 
 )
 
 # A sample logging configuration. The only tangible logging
@@ -183,9 +185,11 @@ AUTHENTICATION_BACKENDS = (
 )
 
 SOCIAL_AUTH_ENABLED_BACKENDS = ('google-oauth2')
+
 GOOGLE_OAUTH_EXTRA_SCOPE = ['http://www.google.com/m8/feeds',]
 SOCIAL_AUTH_DEFAULT_USERNAME = 'new_social_auth_user'
-SOCIAL_AUTH_UUID_LENGTH = 16
+SOCIAL_AUTH_UUID_LENGTH = 16
+
 #SOCIAL_AUTH_SESSION_EXPIRATION = False
 SOCIAL_AUTH_ASSOCIATE_BY_MAIL = True
 

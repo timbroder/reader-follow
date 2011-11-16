@@ -19,6 +19,8 @@ from follow import utils
 from follow.models import Follow
 from django.shortcuts import redirect
 import json 
+import waffle
+from django.core.mail import send_mail
 
 debug = getattr(settings, 'DEBUG', None)
 
@@ -170,8 +172,7 @@ def contacts(request):
         signed_up_emails = [usr.email for usr in signed_up]
         
         following = Follow.objects.filter(user=user)
-        for f in Follow.objects.all():
-            print f.target
+
         following_emails = [usr.target.email for usr in following]
 
         return r2r('index.html', { 'contacts': contacts,
@@ -192,6 +193,24 @@ def follow(request, email):
         following.save()
     
     utils.follow(user, following)
+    
+    if waffle.flag_is_active(request, 'followemail'):
+        msg = """
+        Remember when Google removed following and sharing from reader?  Do you want them back?
+        It's easy! Check out <a href="http://readersharing.net">http://readersharing.net</a>
+        
+        %s is now following you on Google Reader
+        
+        Login to follow them back!
+        """
+        
+        subject = "%s is now following you on Google Reader"
+        
+        send_mail(subject % user.username, 
+                  msg % user.username, 
+                  'contact@readerfollow.net',
+                  [following.email], 
+                  fail_silently=False)
         
     return redirect('/')
 
