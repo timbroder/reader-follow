@@ -2,3 +2,4 @@
 .pydevproject
 *.pyc
 *localsettings.py
+*DS_Store
