@@ -205,10 +205,12 @@ def follow(request, email):
         """
         
         subject = "%s is now following you on Google Reader"
-        
+        #print subject % user.username
+        #print msg % user.username
+        #print [following.email]
         send_mail(subject % user.username, 
                   msg % user.username, 
-                  'contact@readerfollow.net',
+                  'follow@readerfollow.net',
                   [following.email], 
                   fail_silently=False)
         
