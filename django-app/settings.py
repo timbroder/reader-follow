@@ -193,7 +193,10 @@ SOCIAL_AUTH_UUID_LENGTH = 16
 #SOCIAL_AUTH_SESSION_EXPIRATION = False
 SOCIAL_AUTH_ASSOCIATE_BY_MAIL = True
 
+EMAIL_BACKEND = 'django_ses.SESBackend'
+
 try:
     from localsettings import *
 except ImportError:
     pass
+
