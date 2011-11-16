@@ -3,6 +3,8 @@ from models import *
 from django.shortcuts import get_object_or_404
 from follow import utils
 from follow.models import Follow
+from django.conf import settings
+from django.contrib.sites.models import Site
 
 class ArticleFeed(Feed):
     def item_title(self, item):
@@ -50,7 +52,8 @@ class FollowingFeed(ArticleFeed):
         return item.article.url
     
     def item_description(self, item):
-        return item.article.body
+        site = Site.objects.get(id=settings.SITE_ID)
+        return "Shared by: <a href=\"http://%s/shared/%s/\">%s</a><br>%s" % (site.domain, item.userprofile.user.email, item.userprofile.user.username, item.article.body)
     
     def item_pubdate(self, item):
         item.shared_on

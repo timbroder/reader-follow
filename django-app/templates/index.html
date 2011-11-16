@@ -6,7 +6,7 @@
 {% block content %}
 <div>
 	<p>Everyone you follow: <a href="/feed/{{ user.email }}/{{ user.get_profile.auth_key }}/">Feed</a></p>
-	<p>Auth Key: {{ user.get_profile.auth_key }}</p>
+	<p>Auth Key for {{ user.username}}: {{ user.get_profile.auth_key }}</p>
 </div>
 <div style="width: 700px">
 	<table id="contacts">
