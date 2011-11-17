@@ -74,10 +74,19 @@ class GoogleContact:
     def __str__(self):
         return self.__unicode__()
 
+
+class NottyResponse(HttpResponse):
+    notty = "$.notty({ content : '%s', timeout: 3000 });"
+    def __init__(self, data):
+        data = self.notty % (data)
+        HttpResponse.__init__( self, data,
+                               mimetype='application/json'
+                               )
+
 class JsonpResponse(HttpResponse):
-    def __init__(self, data, callback):
+    def __init__(self, data):
         json = simplejson.dumps(data)
-        jsonp = "%s(%s)" % (callback, json)
+        jsonp = "$(%s)" % (json)
         HttpResponse.__init__( self, jsonp,
                                mimetype='application/json'
                                )

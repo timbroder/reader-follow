@@ -74,7 +74,7 @@ ReaderSharing.prototype = {
 	
 	add_button: function($action) {
 		var self = this,
-			$share_button = $('<span class="item-link link reader-sharing"><span class="link unselectable">Share!</span></span>');
+			$share_button = $('<span class="item-link link reader-sharing"><span class="link unselectable">Sharing</span></span>');
 		$share_button.on('click', function(){
 			self.post($(this));
 		});
@@ -96,107 +96,26 @@ ReaderSharing.prototype = {
 				'published_on': $data.find('.entry-date').text(),
 				'title': $title.text(),
 				'auth': this.key
+				//'callback': myFunction
 		};
 		
-		var req = $.ajax({
-			  url: this.post_url + '?callback=?',
-			  data : json
-			});
+		GM_xmlhttpRequest({
+			url: this.post_url + '?' + $.param(json),// + '?callback=?',
+			data : json,
+			method: "GET",
+			onload: function (responseObject){
+				var data = responseObject.responseText;
+				var tmpFunc = new Function(data);
+				tmpFunc(); 
+			},
+			onerror: function () {}
+		});
 	}
 };
-
-function showStatus(rsp) {
-	$.notty({
-        content : rsp.responseText,
-        timeout: 3000
-     });
-}
 
 $(function(){
 	new ReaderSharing();
 });
-
-//Author: Ryan Greenberg (ryan@ischool.berkeley.edu)
-//Date: September 3, 2009
-//Version: $Id: gm_jq_xhr.js 240 2009-11-03 17:38:40Z ryan $
-
-//This allows jQuery to make cross-domain XHR by providing
-//a wrapper for GM_xmlhttpRequest. The difference between
-//XMLHttpRequest and GM_xmlhttpRequest is that the Greasemonkey
-//version fires immediately when passed options, whereas the standard
-//XHR does not run until .send() is called. In order to allow jQuery
-//to use the Greasemonkey version, we create a wrapper object, GM_XHR,
-//that stores any parameters jQuery passes it and then creates GM_xmlhttprequest
-//when jQuery calls GM_XHR.send().
-
-//Wrapper function
-function GM_XHR() {
- this.type = null;
- this.url = null;
- this.async = null;
- this.username = null;
- this.password = null;
- this.status = null;
- this.headers = {};
- this.readyState = null;
- this.success = null;
- 
- this.open = function(type, url, async, username, password) {
-     this.type = type ? type : null;
-     this.url = url ? url : null;
-     this.async = async ? async : null;
-     this.username = username ? username : null;
-     this.password = password ? password : null;
-     this.readyState = 1;
- };
- 
- this.setRequestHeader = function(name, value) {
-     this.headers[name] = value;
- };
-     
- this.abort = function() {
-     this.readyState = 0;
- };
- 
- this.getResponseHeader = function(name) {
-     return this.headers[name];
- };
- 
- this.send = function(data) {
-     this.data = data;
-     var that = this;
-     GM_xmlhttpRequest({
-         method: this.type,
-         url: this.url,
-         headers: this.headers,
-         data: this.data,
-         success: this.success,
-         onload: function(rsp) {
-             // Populate wrapper object with all data returned from GM_XMLHttpRequest
-             for (k in rsp) {
-                 that[k] = rsp[k];
-             }
-             showStatus(rsp);
-         },
-         onerror: function(rsp) {
-             for (k in rsp) {
-                 that[k] = rsp[k];
-             }
-         },
-         onreadystatechange: function(rsp) {
-             for (k in rsp) {
-                 that[k] = rsp[k];
-             }
-         }
-     });
- };
-};
-
-//Tell jQuery to use the GM_XHR object instead of the standard browser XHR
-$.ajaxSetup({
- xhr: function(){return new GM_XHR;}
-});
-
 
 /**
 @name           Script Update Checker
@@ -231,7 +150,7 @@ var style = "#nottys{position:fixed;top:20px;right:20px;width:280px;z-index:999}
 "100%{right:-223px;opacity:0}";
 GM_addStyle(style);
 
-//var SUC_script_num = 20145; // Change this to the number given to the script by userscripts.org (check the address bar)
+//var SUC_script_num = 118173; // Change this to the number given to the script by userscripts.org (check the address bar)
 //try{function updateCheck(forced){if ((forced) || (parseInt(GM_getValue('SUC_last_update', '0')) + 86400000 <= (new Date().getTime()))){try{GM_xmlhttpRequest({method: 'GET',url: 'http://userscripts.org/scripts/source/'+SUC_script_num+'.meta.js?'+new Date().getTime(),headers: {'Cache-Control': 'no-cache'},onload: function(resp){var local_version, remote_version, rt, script_name;rt=resp.responseText;GM_setValue('SUC_last_update', new Date().getTime()+'');remote_version=parseInt(/@uso:version\s*(.*?)\s*$/m.exec(rt)[1]);local_version=parseInt(GM_getValue('SUC_current_version', '-1'));if(local_version!=-1){script_name = (/@name\s*(.*?)\s*$/m.exec(rt))[1];GM_setValue('SUC_target_script_name', script_name);if (remote_version > local_version){if(confirm('There is an update available for the Greasemonkey script "'+script_name+'."\nWould you like to go to the install page now?')){GM_openInTab('http://userscripts.org/scripts/show/'+SUC_script_num);GM_setValue('SUC_current_version', remote_version);}}else if (forced)alert('No update is available for "'+script_name+'."');}else GM_setValue('SUC_current_version', remote_version+'');}});}catch (err){if (forced)alert('An error occurred while checking for updates:\n'+err);}}}GM_registerMenuCommand(GM_getValue('SUC_target_script_name', '???') + ' - Manual Update Check', function(){updateCheck(true);});updateCheck(false);}catch(err){}
 
 /*!

@@ -63,7 +63,6 @@ def convert_publish_date(in_string):
 #    "title": "my_title",
 #    "auth": "021cf1a61bd8a2e1b1bc108932110340"
 #}
-@csrf_exempt
 def post(request):
     #if request.method != 'POST':
     #    return HttpResponseNotFound('<h1>expecting post</h1>')
@@ -87,21 +86,22 @@ def post(request):
     try:
         profile = UserProfile.objects.get(auth_key=data['auth'])
     except:
-        return HttpResponse('bad auth key')
+        return NottyResponse('bad auth key')
 
     try:
         shared = Shared.objects.get(article=article,
                         userprofile=profile
                         )
         #already shared
-        return HttpResponse('already shared')
+        return NottyResponse('already shared');
+        #return JsonpResponse("alert('already shared');")
     except Exception as e:
         shared = Shared(article=article,
                         userprofile=profile,
                         shared_on=datetime.datetime.now()
                         )
         shared.save()
-    return HttpResponse("shared: %s" % article.title)
+    return NottyResponse("shared: %s" % article.title)
     
     
 def get(request, article_id):
