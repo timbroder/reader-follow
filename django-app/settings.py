@@ -129,6 +129,7 @@ INSTALLED_APPS = (
     'waffle', 
     'django_ses',
     'google_analytics',
+    'django.contrib.comments',
 )
 
 # A sample logging configuration. The only tangible logging
