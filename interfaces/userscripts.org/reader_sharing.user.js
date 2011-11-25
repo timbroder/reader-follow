@@ -44,6 +44,7 @@ function main() {
 		var self = this;
 		this.key = GM_getValue("greader_key");
 		self.post_url = 'http://readersharing.net/post/';
+		this.settingsShown = false;
 		
 		this.buttons_check();
 		
@@ -76,20 +77,28 @@ function main() {
 		},
 		
 		bind_menu: function() {
-			var self = this,
-				$controls = $('#viewer-top-controls'),
-				$button = $('<a href="#">Reader Sharing Settings</a>');
-			
-			$button.on('click', function(){
-				self.show_modal(true);
-			});
-			$button.appendTo($controls);
+			if (!this.settingsShown) {
+				var self = this,
+					$controls = $('#viewer-top-controls'),
+					$button = $('<a href="#">Reader Sharing Settings</a>');
+				
+				$button.on('click', function(){
+					self.show_modal(true);
+				});
+				$button.appendTo($controls);
+				self.settingsShown = true;
+			}
 		},
 		
 		buttons_check: function() {
 			var self = this;
 			setTimeout(function () {
 				if($('#entries .entry').length === 0) {
+					if (!self.settingsShown) {
+						if($('#no-entries-msg').length !== 0) {
+							self.bind_menu();
+						}
+					}
 					self.buttons_check();
 				}
 				else{
