@@ -53,7 +53,10 @@ function main() {
 		}
 	};
 	
-	var ReaderUI = function() {};
+	var ReaderUI = function() {
+		this.key = GM_getValue("greader_key");
+	};
+	
 	ReaderUI.prototype = {
 		get_bar_button: function(text) {
 			return $('<span class="item-link link reader-sharing"><span class="link unselectable">' + text + '</span></span>').clone();
@@ -74,13 +77,100 @@ function main() {
 					 + '  </div>'
 					 + '</div>';
 			return $(html).clone();
-		}
+		},
+		
+		get_post_data: function($elm) {
+			var $data = $elm.parents('.card').find('.entry-container');
+			var $title = $data.find('.entry-title a');
+			var $href = $title.attr('href');
+			var $container = $data.parents('.card-common');
+			var sha = SHA1($href);
+			if (this.key === '' || this.key === null || this.key === 'undefined') {
+				this.show_modal(false);
+				return;
+			}
+			
+			console.log('sha?');
+			console.log(SHA1($href));
+			console.log($container);
+			$container.addClass(sha);
+			
+			var json = {
+					'url': $href,	
+					'body': $data.find('.entry-body').html(),
+					'published_on': $data.find('.entry-date').text(),
+					'title': $title.text(),
+					'auth': this.key,
+					'sha': sha
+					//'callback': myFunction
+			};
+			
+			return json;
+		}		
 	};
 	
-	var ReaderSharing = function() {
+	var ReaderComment = function(base_url) {
+		this.base_url = base_url;
+		this.key = GM_getValue("greader_key");
+		console.log('key');
+		console.log(this.key);
+		this.loader = new Loader();
+		this.ui = new ReaderUI();
+	};
+	
+	ReaderComment.prototype = {
+		add_button: function($action, $next_to) {
+			var self = this,
+				$comment_button = this.ui.get_bar_button('Comment');
+			
+			$comment_button.on('click', function(){
+				self.comment($(this));
+			});
+			
+			$comment_button.insertAfter($next_to);
+			
+			this.display_comments($action);
+		},
+		
+		display_comments: function($elm) {
+			var $comments_area = $elm.parents('.card').find('.entry-comments');
+			
+			//just in case gogle rips it out
+			if ($comments_area.size() < 1) {
+				$comments_area = this.ui.get_comment_area();
+				$elm.parents('.card').find('.card-actions').before($comments_area);
+			}
+			/*else {
+				$comments_area.html('alaready there');
+			}*/
+		},
+		
+		comment: function($elm) {
+			var self = this,
+				$comments_area = $elm.parents('.card').find('.entry-comments');
+			if ($comments_area.find('.add_comment').size() === 0) {
+				var $add_button = this.ui.get_add_comment();
+				$add_button.find('.submit').on('click', function(event){
+					event.preventDefault();
+					var json = self.ui.get_post_data($elm);
+					delete json.body;
+					delete json.published_on;
+					delete json.title;
+					
+					json.comment = $(this).parents('.add_comment').find('textarea').val();
+					var url = self.base_url + 'comment/?' + $.param(json);
+					console.log(url);
+					self.loader.addScript(url);
+				});
+				$comments_area.html($add_button);
+			}
+		}	
+	};
+	
+	var ReaderSharing = function(base_url) {
 		var self = this;
 		this.key = GM_getValue("greader_key");
-		self.base_url = 'http://localhost:8000/';
+		self.base_url = base_url;
 		this.settingsShown = false;
 		
 		this.buttons_check();
@@ -99,6 +189,7 @@ function main() {
 		this.show_modal(false);
 		this.loader = new Loader();
 		this.ui = new ReaderUI();
+		this.comments = new ReaderComment(this.base_url);
 
 	};
 
@@ -155,88 +246,21 @@ function main() {
 		
 		add_button: function($action) {
 			var self = this,
-				$share_button = this.ui.get_bar_button('Sharing.net'),
-				$comment_button = this.ui.get_bar_button('Comment');
+				$share_button = this.ui.get_bar_button('Sharing.net')
 			$share_button.on('click', function(){
 				self.post($(this));
 			});
-			$comment_button.on('click', function(){
-				self.comment($(this));
-			});
 			
 			$share_button.insertAfter($action.find(".star"));
-			$comment_button.insertAfter($share_button);
 			$share_button.parent().addClass('reader-shareable');
 			
-			this.display_comments($action);
-		},
-		
-		display_comments: function($elm) {
-			var $comments_area = $elm.parents('.card').find('.entry-comments');
+			this.comments.add_button($action, $share_button);
 			
-			//just in case gogle rips it out
-			if ($comments_area.size() < 1) {
-				$comments_area = this.ui.get_comment_area();
-				$elm.parents('.card').find('.card-actions').before($comments_area);
-			}
-			/*else {
-				$comments_area.html('alaready there');
-			}*/
-		},
-		
-		get_post_data: function($elm) {
-			var $data = $elm.parents('.card').find('.entry-container');
-			var $title = $data.find('.entry-title a');
-			var $href = $title.attr('href');
-			var $container = $data.parents('.card-common');
-			var sha = SHA1($href);
-			if (this.key === '' || this.key === null || this.key === 'undefined') {
-				this.show_modal(false);
-				return;
-			}
-			
-			console.log('sha?');
-			console.log(SHA1($href));
-			console.log($container);
-			$container.addClass(sha);
-			
-			var json = {
-					'url': $href,	
-					'body': $data.find('.entry-body').html(),
-					'published_on': $data.find('.entry-date').text(),
-					'title': $title.text(),
-					'auth': this.key,
-					'sha': sha
-					//'callback': myFunction
-			};
-			
-			return json;
-		},
-		
-		comment: function($elm) {
-			var self = this,
-				$comments_area = $elm.parents('.card').find('.entry-comments');
-			if ($comments_area.find('.add_comment').size() === 0) {
-				var $add_button = this.ui.get_add_comment();
-				$add_button.find('.submit').on('click', function(event){
-					event.preventDefault();
-					var json = self.get_post_data($elm);
-					delete json.body;
-					delete json.published_on;
-					delete json.title;
-					
-					json.comment = $(this).parents('.add_comment').find('textarea').val();
-					var url = self.base_url + 'comment/?' + $.param(json);
-					console.log(url);
-					self.loader.addScript(url);
-				});
-				$comments_area.html($add_button);
-			}
 		},
 		
 		post: function($elm) {
 			var self = this,
-				json = this.get_post_data($elm);
+				json = this.ui.get_post_data($elm);
 			delete json.sha;
 			
 			/*GM_xmlhttpRequest({
@@ -255,6 +279,7 @@ function main() {
 		}
 	};
 	
+	
 	/*var loadr = new Loader();
 	if (!(navigator.userAgent.toLowerCase().indexOf('chrome') > -1)) {
 		console.log('load jquery');
@@ -263,7 +288,8 @@ function main() {
 	loadr.addScript('http://readersharing.net/media/js/notty.js');*/
 	
 	$(function(){
-		new ReaderSharing();
+		new ReaderSharing('http://localhost:8000/');
+		//new ReaderComments('http://localhost:8000/');
 	});
 	
 	function SHA1(a){function e(a){a=a.replace(/\r\n/g,"\n");var b="";for(var c=0;c<a.length;c++){var d=a.charCodeAt(c);d<128?b+=String.fromCharCode(d):d>127&&d<2048?(b+=String.fromCharCode(d>>6|192),b+=String.fromCharCode(d&63|128)):(b+=String.fromCharCode(d>>12|224),b+=String.fromCharCode(d>>6&63|128),b+=String.fromCharCode(d&63|128))}return b}function d(a){var b="",c,d;for(c=7;c>=0;c--)d=a>>>c*4&15,b+=d.toString(16);return b}function c(a){var b="",c,d,e;for(c=0;c<=6;c+=2)d=a>>>c*4+4&15,e=a>>>c*4&15,b+=d.toString(16)+e.toString(16);return b}function b(a,b){var c=a<<b|a>>>32-b;return c}var f,g,h,i=Array(80),j=1732584193,k=4023233417,l=2562383102,m=271733878,n=3285377520,o,p,q,r,s,t;a=e(a);var u=a.length,v=[];for(g=0;g<u-3;g+=4)h=a.charCodeAt(g)<<24|a.charCodeAt(g+1)<<16|a.charCodeAt(g+2)<<8|a.charCodeAt(g+3),v.push(h);switch(u%4){case 0:g=2147483648;break;case 1:g=a.charCodeAt(u-1)<<24|8388608;break;case 2:g=a.charCodeAt(u-2)<<24|a.charCodeAt(u-1)<<16|32768;break;case 3:g=a.charCodeAt(u-3)<<24|a.charCodeAt(u-2)<<16|a.charCodeAt(u-1)<<8|128}v.push(g);while(v.length%16!=14)v.push(0);v.push(u>>>29),v.push(u<<3&4294967295);for(f=0;f<v.length;f+=16){for(g=0;g<16;g++)i[g]=v[f+g];for(g=16;g<=79;g++)i[g]=b(i[g-3]^i[g-8]^i[g-14]^i[g-16],1);o=j,p=k,q=l,r=m,s=n;for(g=0;g<=19;g++)t=b(o,5)+(p&q|~p&r)+s+i[g]+1518500249&4294967295,s=r,r=q,q=b(p,30),p=o,o=t;for(g=20;g<=39;g++)t=b(o,5)+(p^q^r)+s+i[g]+1859775393&4294967295,s=r,r=q,q=b(p,30),p=o,o=t;for(g=40;g<=59;g++)t=b(o,5)+(p&q|p&r|q&r)+s+i[g]+2400959708&4294967295,s=r,r=q,q=b(p,30),p=o,o=t;for(g=60;g<=79;g++)t=b(o,5)+(p^q^r)+s+i[g]+3395469782&4294967295,s=r,r=q,q=b(p,30),p=o,o=t;j=j+o&4294967295,k=k+p&4294967295,l=l+q&4294967295,m=m+r&4294967295,n=n+s&4294967295}var t=d(j)+d(k)+d(l)+d(m)+d(n);return t.toLowerCase()}
