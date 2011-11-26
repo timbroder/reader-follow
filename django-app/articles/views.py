@@ -35,10 +35,8 @@ debug = getattr(settings, 'DEBUG', None)
 #            newobj[attr]=dump(newobj[attr])
 #    return newobj
 
-def invalid_post(data):
+def test_invalids(data, tests):
     invalid = ''
-    tests = ['url', 'body', 'published_on', 'title']
-    
     for test in tests:
         if test not in data:
             invalid = "%s %s," % (invalid, test)
@@ -46,6 +44,14 @@ def invalid_post(data):
     if invalid != '':
         return "Error: missing" + invalid.strip(',')
     return None
+
+def invalid_post(data):
+    tests = ['url', 'body', 'published_on', 'title']
+    return test_invalids(data, tests)
+    
+def invalid_comment(data):
+    tests = ['url', 'auth', 'comment']
+    return test_invalids(data, tests)
 
 def convert_publish_date(in_string):
     return datetime.datetime.now()
@@ -102,6 +108,15 @@ def post(request):
                         )
         shared.save()
     return NottyResponse("shared: %s" % article.title)
+
+def comment(request):
+    data = request.GET
+    is_invalid = invalid_comment(data)
+    if is_invalid:
+        return HttpResponse("0")
+    
+    print data
+    return NottyResponse("back")
     
     
 def get(request, article_id):

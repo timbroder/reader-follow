@@ -16,6 +16,7 @@ urlpatterns = patterns('',
     (r'^feed/(?P<email>.+)/(?P<auth_key>.+)/$', feeds.FollowingFeed()),
     
     (r'^post/$', articles.post),
+    (r'^comment/$', articles.comment),
     (r'^get/(?P<article_id>\d+)/$', articles.get),
     url(r'', include('social_auth.urls')),
     url('^', include('follow.urls')),
