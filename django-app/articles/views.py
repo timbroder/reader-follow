@@ -21,6 +21,8 @@ from django.shortcuts import redirect
 import json 
 import waffle
 from django.core.mail import send_mail
+from django.contrib.comments import Comment
+from django.contrib.contenttypes.models import ContentType
 
 debug = getattr(settings, 'DEBUG', None)
 
@@ -116,7 +118,26 @@ def comment(request):
         return HttpResponse("0")
     
     print data
-    return NottyResponse("back")
+    try:
+        article = Article.objects.get(url = data['url'])
+    except Article.DoesNotExist:
+        return NottyResponse("not shared yet, fix this")
+        
+    try:
+        profile = UserProfile.objects.get(auth_key=data['auth'])
+    except:
+        return NottyResponse('bad auth key')
+    
+    comment = Comment();
+    comment.ip_address = request.META.get("REMOTE_ADDR", None)
+    comment.user = profile.user
+    comment.comment = data['comment']
+    comment.content_type = ContentType.objects.get(app_label="articles", model="article")
+    comment.object_pk = article.id
+    comment.site = Site.objects.get(id=1)
+    comment.save()
+    
+    return NottyResponse("Comment Added")
     
     
 def get(request, article_id):
