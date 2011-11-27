@@ -23,6 +23,9 @@ import waffle
 from django.core.mail import send_mail
 from django.contrib.comments import Comment
 from django.contrib.contenttypes.models import ContentType
+from django.utils.hashcompat import md5_constructor
+from django.utils.http import urlquote
+from django.core.cache import cache
 
 debug = getattr(settings, 'DEBUG', None)
 
@@ -53,6 +56,10 @@ def invalid_post(data):
     
 def invalid_comment(data):
     tests = ['url', 'auth', 'comment']
+    return test_invalids(data, tests)
+
+def invalid_comments(data):
+    tests = ['url',]
     return test_invalids(data, tests)
 
 def convert_publish_date(in_string):
@@ -128,6 +135,11 @@ def comment(request):
     except:
         return NottyResponse('bad auth key')
     
+    variables = [article.id,] 
+    hash = md5_constructor(u':'.join([urlquote(var) for var in variables]))
+    cache_key = 'template.cache.%s.%s' % ('comments', hash.hexdigest())
+    cache.delete(cache_key)
+    
     comment = Comment();
     comment.ip_address = request.META.get("REMOTE_ADDR", None)
     comment.user = profile.user
@@ -138,6 +150,21 @@ def comment(request):
     comment.save()
     
     return NottyResponse("Comment Added")
+
+def comments(request):
+    data = request.GET
+    is_invalid = invalid_comments(data)
+    if is_invalid:
+        return HttpResponse("0")
+    try:
+        article = Article.objects.get(url = data['url'])
+    except Article.DoesNotExist:
+        return HttpResponse("0")
+    
+    articleType = ContentType.objects.get(app_label="articles", model="article")
+    comments = Comment.objects.select_related('user').filter(content_type=articleType, object_pk=article.id, is_removed=False)
+    
+    return r2r('comments.html', { 'article': article, 'comment_list': comments })
     
     
 def get(request, article_id):

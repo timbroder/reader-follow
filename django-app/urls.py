@@ -17,6 +17,7 @@ urlpatterns = patterns('',
     
     (r'^post/$', articles.post),
     (r'^comment/$', articles.comment),
+    (r'^comments/$', articles.comments),
     (r'^get/(?P<article_id>\d+)/$', articles.get),
     url(r'', include('social_auth.urls')),
     url('^', include('follow.urls')),
