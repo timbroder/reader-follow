@@ -59,7 +59,7 @@ def invalid_comment(data):
     return test_invalids(data, tests)
 
 def invalid_comments(data):
-    tests = ['url',]
+    tests = ['url', 'sha']
     return test_invalids(data, tests)
 
 def convert_publish_date(in_string):
@@ -164,7 +164,7 @@ def comments(request):
     articleType = ContentType.objects.get(app_label="articles", model="article")
     comments = Comment.objects.select_related('user').filter(content_type=articleType, object_pk=article.id, is_removed=False)
     
-    return r2r('comments.html', { 'article': article, 'comment_list': comments })
+    return r2r('comments.js', { 'article': article, 'comment_list': comments, 'sha': data['sha'] })
     
     
 def get(request, article_id):

@@ -5,6 +5,7 @@
 // @include        http://www.google.com/reader/view/*
 // @include        https://www.google.com/reader/view/*
 // @require        http://cdnjs.cloudflare.com/ajax/libs/jquery/1.7/jquery.min.js
+// @version        1.1.0
 // ==/UserScript==
 
 function main() {
@@ -38,23 +39,14 @@ function main() {
 			script.src = url;
 			
 			if (clazz !== null ) {
-				script.class = clazz;
+				script.className = clazz;
 			}
 			
-			//clear out dom
-			if (typeof jQuery !== 'undefined') {
-				$('script .clearable').remove();
-			}
 			this.body.appendChild(script);
-		},
-		
-		addTempScript: function(url) {
-			this.addScript(url, 'clearable');
 		}
 	};
 	
 	var Article = function(key, factory, loader, $article) {
-		console.log('Article');
 		this.key = key;
 		this.ui = factory;
 		this.loader = loader;
@@ -64,7 +56,6 @@ function main() {
 	
 	Article.prototype = {
 		init: function($article) {
-			console.log('init');
 			var self = this;
 			this.endpoint = 'http://localhost:8000/';
 			this.$container = $article;
@@ -76,7 +67,9 @@ function main() {
 			this.published_on = this.$container.find('.entry-date').text();
 			
 			this.sha = SHA1(this.href);
+			this.$comments_area = this.ui.get_comments_area(this.$container);
 			
+			this.display_comments();
 			this.init_share_button();
 			this.init_comment_button();
 			
@@ -85,7 +78,7 @@ function main() {
 				return;
 			}
 			
-			this.$container.addClass(this.sha);
+			this.$container.parents('.card-common').addClass(this.sha);
 		},
 		
 		init_share_button: function() {
@@ -132,13 +125,11 @@ function main() {
 				onerror: function () {}
 			});*/
 			var url = this.endpoint + 'post/?' + $.param(json);
-			this.loader.addScript(url);
+			this.loader.addScript(url, this.sha);
 		},
 		
 		add_comment: function() {
-			console.log('add comment');
 			var self = this;
-			this.$comments_area = this.ui.get_comments_area(this.$container);
 			if (this.$comments_area.find('.add_comment').size() === 0) {
 				var $add_button = this.ui.get_add_comment();	
 				$add_button.find('.submit').on('click', function(event){
@@ -150,14 +141,16 @@ function main() {
 					
 					json.comment = $(this).parents('.add_comment').find('textarea').val();
 					var url = self.endpoint + 'comment/?' + $.param(json);
-					self.loader.addScript(url);
+					self.loader.addScript(url, this.sha);
 				});
-				this.$comments_area.html($add_button);
+				this.$comments_area.append($add_button);
 			}
 		},
 		
 		display_comments: function() {
-			
+			var json = this.get_json_href();
+			var url = this.endpoint + 'comments/?' + $.param(json);
+			this.loader.addScript(url, this.sha);
 		},
 		
 		get_json_data: function() {
@@ -172,6 +165,19 @@ function main() {
 			};
 			
 			return json;
+		},
+		
+		get_json_href: function() {
+			var json = {
+					'url': this.href,
+					'sha': this.sha
+			};
+			
+			return json;
+		},
+		
+		destroy: function() {
+			$('script .' + this.sha).remove();
 		}
 	};
 	
@@ -189,15 +195,15 @@ function main() {
 		},
 		
 		get_add_comment: function() {
-			var html = '<div class="add_comment">'
-					 + '  <div>'
-					 + '<textarea rows="2" cols="40">'
-					 + 'comment your face</textarea>'
-					 + '  </div>'
-					 + '  <div>'
-					 + '    <input class="submit" type="submit" value="Add Comment" />'
-					 + '  </div>'
-					 + '</div>';
+			var html = '<div class="add_comment">' + 
+					   '<div>' +
+					   '<textarea rows="2" cols="40">' +
+					   'comment your face</textarea>' +
+					   '  </div>' +
+					   '  <div>' +
+					   '    <input class="submit" type="submit" value="Add Comment" />' +
+					   '  </div>' +
+					   '</div>';
 			return $(html).clone();
 		},
 		
@@ -214,8 +220,7 @@ function main() {
 			}*/
 			
 			return $comments_area;
-		},
-		
+		}
 	};
 	
 	var ReaderSharing = function(base_url) {
@@ -301,18 +306,25 @@ function main() {
 }
 
 //needed for chrome
-function addJQuery() {
+function addJQuery(callback) {
   var script = document.createElement("script");
   script.setAttribute("src", "http://localhost:8000/media/js/notty.with.js");
   script.addEventListener('load', function() {
-    main();
+	  if (navigator.userAgent.toLowerCase().indexOf('chrome') > -1) {
+		  var script = document.createElement("script");
+		  script.textContent = "(" + callback.toString() + ")();";
+		  document.body.appendChild(script);
+	  }
+	  else {
+		  main();
+	  }
   }, false);
   document.body.appendChild(script);
 }
 
 // load jQuery and execute the main function
 //if (navigator.userAgent.toLowerCase().indexOf('chrome') > -1) {
-	addJQuery();
+	addJQuery(main);
 //}
 //else if (typeof jQuery !== 'undefined') {
 //	addJQuery();
