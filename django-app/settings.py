@@ -223,9 +223,11 @@ AUTHENTICATION_BACKENDS = (
 
 SOCIAL_AUTH_ENABLED_BACKENDS = ('google-oauth2')
 
-GOOGLE_OAUTH_EXTRA_SCOPE = ['http://www.google.com/m8/feeds',]
+GOOGLE_OAUTH_EXTRA_SCOPE = ['http://www.google.com/m8/feeds', 'http://www.google.com/reader/api/', 'http://www.google.com/reader/atom/']
 SOCIAL_AUTH_DEFAULT_USERNAME = 'new_social_auth_user'
-SOCIAL_AUTH_UUID_LENGTH = 16
+SOCIAL_AUTH_UUID_LENGTH = 16
+#SOCIAL_AUTH_EXPIRATION = '31104000'
+SOCIAL_AUTH_SESSION_EXPIRATION = False
 
 #SOCIAL_AUTH_SESSION_EXPIRATION = False
 SOCIAL_AUTH_ASSOCIATE_BY_MAIL = True

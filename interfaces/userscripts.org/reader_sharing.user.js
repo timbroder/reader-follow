@@ -46,10 +46,11 @@ function main() {
 		}
 	};
 	
-	var Article = function(key, factory, loader, $article) {
+	var Article = function(key, factory, loader, base_url, $article) {
 		this.key = key;
 		this.ui = factory;
 		this.loader = loader;
+		this.endpoint = base_url;
 		
 		this.init($article);
 	};
@@ -57,7 +58,6 @@ function main() {
 	Article.prototype = {
 		init: function($article) {
 			var self = this;
-			this.endpoint = 'http://localhost:8000/';
 			this.$container = $article;
 			this.$container.addClass('reader-shareable');
 			this.$action_bar = this.$container.parents('.card-common').find('.card-actions');
@@ -125,6 +125,7 @@ function main() {
 				onerror: function () {}
 			});*/
 			var url = this.endpoint + 'post/?' + $.param(json);
+			console.log(url);
 			this.loader.addScript(url, this.sha);
 		},
 		
@@ -292,14 +293,14 @@ function main() {
 			var self = this;
 			$('.entry-container:not(.reader-shareable)').each(function () {
 				//self.add_button($(this));
-				self.articles.push(new Article(self.key, self.ui, self.loader, $(this)));
+				self.articles.push(new Article(self.key, self.ui, self.loader, self.base_url, $(this)));
 			});
 		}
 
 	};
 
 	$(function(){
-		new ReaderSharing('http://localhost:8000/');
+		new ReaderSharing('http://readersharing.net/');
 	});
 	
 	function SHA1(a){function e(a){a=a.replace(/\r\n/g,"\n");var b="";for(var c=0;c<a.length;c++){var d=a.charCodeAt(c);d<128?b+=String.fromCharCode(d):d>127&&d<2048?(b+=String.fromCharCode(d>>6|192),b+=String.fromCharCode(d&63|128)):(b+=String.fromCharCode(d>>12|224),b+=String.fromCharCode(d>>6&63|128),b+=String.fromCharCode(d&63|128))}return b}function d(a){var b="",c,d;for(c=7;c>=0;c--)d=a>>>c*4&15,b+=d.toString(16);return b}function c(a){var b="",c,d,e;for(c=0;c<=6;c+=2)d=a>>>c*4+4&15,e=a>>>c*4&15,b+=d.toString(16)+e.toString(16);return b}function b(a,b){var c=a<<b|a>>>32-b;return c}var f,g,h,i=Array(80),j=1732584193,k=4023233417,l=2562383102,m=271733878,n=3285377520,o,p,q,r,s,t;a=e(a);var u=a.length,v=[];for(g=0;g<u-3;g+=4)h=a.charCodeAt(g)<<24|a.charCodeAt(g+1)<<16|a.charCodeAt(g+2)<<8|a.charCodeAt(g+3),v.push(h);switch(u%4){case 0:g=2147483648;break;case 1:g=a.charCodeAt(u-1)<<24|8388608;break;case 2:g=a.charCodeAt(u-2)<<24|a.charCodeAt(u-1)<<16|32768;break;case 3:g=a.charCodeAt(u-3)<<24|a.charCodeAt(u-2)<<16|a.charCodeAt(u-1)<<8|128}v.push(g);while(v.length%16!=14)v.push(0);v.push(u>>>29),v.push(u<<3&4294967295);for(f=0;f<v.length;f+=16){for(g=0;g<16;g++)i[g]=v[f+g];for(g=16;g<=79;g++)i[g]=b(i[g-3]^i[g-8]^i[g-14]^i[g-16],1);o=j,p=k,q=l,r=m,s=n;for(g=0;g<=19;g++)t=b(o,5)+(p&q|~p&r)+s+i[g]+1518500249&4294967295,s=r,r=q,q=b(p,30),p=o,o=t;for(g=20;g<=39;g++)t=b(o,5)+(p^q^r)+s+i[g]+1859775393&4294967295,s=r,r=q,q=b(p,30),p=o,o=t;for(g=40;g<=59;g++)t=b(o,5)+(p&q|p&r|q&r)+s+i[g]+2400959708&4294967295,s=r,r=q,q=b(p,30),p=o,o=t;for(g=60;g<=79;g++)t=b(o,5)+(p^q^r)+s+i[g]+3395469782&4294967295,s=r,r=q,q=b(p,30),p=o,o=t;j=j+o&4294967295,k=k+p&4294967295,l=l+q&4294967295,m=m+r&4294967295,n=n+s&4294967295}var t=d(j)+d(k)+d(l)+d(m)+d(n);return t.toLowerCase()}
@@ -308,7 +309,7 @@ function main() {
 //needed for chrome
 function addJQuery(callback) {
   var script = document.createElement("script");
-  script.setAttribute("src", "http://localhost:8000/media/js/notty.with.js");
+  script.setAttribute("src", "http://readersharing.net/media/js/notty.with.js");
   script.addEventListener('load', function() {
 	  if (navigator.userAgent.toLowerCase().indexOf('chrome') > -1) {
 		  var script = document.createElement("script");

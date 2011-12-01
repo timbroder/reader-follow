@@ -9,6 +9,10 @@ from django.http import HttpResponse
 class Article(models.Model):
     title = models.CharField(max_length=255, unique=True)
     url = models.URLField()
+    
+    #his really should join o a domain object, don't care atm
+    domain = models.URLField(blank=True, null=True)
+    google_id = models.CharField(max_length=255, unique=True, blank=True, null=True)
     body = models.TextField()
     published_on = models.DateTimeField()
     users = models.ManyToManyField(User)

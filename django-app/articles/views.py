@@ -15,6 +15,7 @@ from django.views.decorators.csrf import csrf_exempt
 from social_auth.models import UserSocialAuth
 #from pprint import pprint
 from gdata.contacts import service, client
+import gdata
 from follow import utils
 from follow.models import Follow
 from django.shortcuts import redirect
@@ -26,6 +27,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.utils.hashcompat import md5_constructor
 from django.utils.http import urlquote
 from django.core.cache import cache
+from BeautifulSoup import BeautifulSoup as Soup
+import pprint
 
 debug = getattr(settings, 'DEBUG', None)
 
@@ -53,6 +56,10 @@ def test_invalids(data, tests):
 def invalid_post(data):
     tests = ['url', 'body', 'published_on', 'title']
     return test_invalids(data, tests)
+
+def invalid_share(data):
+    tests = ['url', 'auth']
+    return test_invalids(data, tests)
     
 def invalid_comment(data):
     tests = ['url', 'auth', 'comment']
@@ -71,6 +78,21 @@ def convert_publish_date(in_string):
     out_converted = time.strftime("%Y-%m-%d %H:%M", in_converted)
     return out_converted
 
+def share_article(article, profile):
+    try:
+        shared = Shared.objects.get(article=article,
+                        userprofile=profile
+                        )
+        #already shared
+        return False
+        #return JsonpResponse("alert('already shared');")
+    except Exception as e:
+        shared = Shared(article=article,
+                        userprofile=profile,
+                        shared_on=datetime.datetime.now()
+                        )
+        shared.save()
+        return True
 #{
 #    "url": "http: //www.google.com",
 #    "body": "mybody",
@@ -103,21 +125,100 @@ def post(request):
     except:
         return NottyResponse('bad auth key')
 
-    try:
-        shared = Shared.objects.get(article=article,
-                        userprofile=profile
-                        )
-        #already shared
-        return NottyResponse('already shared');
-        #return JsonpResponse("alert('already shared');")
-    except Exception as e:
-        shared = Shared(article=article,
-                        userprofile=profile,
-                        shared_on=datetime.datetime.now()
-                        )
-        shared.save()
-    return NottyResponse("shared: %s" % article.title)
+    if share_article(article, profile):
+        return NottyResponse("already shared") 
+    else:
+        return NottyResponse("shared: %s" % article.title)
 
+def get_entry_data(request, url):
+    get_id_url = "https://www.google.com/reader/api/0/search/items/ids?q=%s" % url
+    get_entry_url = "https://www.google.com/reader/api/0/stream/items/contents?freshness=false&client=reader-follow&i=%s"
+    try:
+        article = Article.objects.get(url=url)
+        return article
+    except:
+        article = Article()
+    
+    auth = UserSocialAuth.objects.get(user=User.objects.get(id=10))
+    gd_client = service.ContactsService()
+    gd_client.debug = 'true'
+    gd_client.SetAuthSubToken(auth.extra_data['access_token'])
+
+    search = gd_client.Get(get_id_url)
+    soup = Soup(search.__str__())
+    entry_id = soup.findAll('number')[0].text
+    get_entry_url = get_entry_url % entry_id
+    entry = gd_client.Get(get_entry_url, converter=str) 
+    json = simplejson.loads(entry.__str__())
+
+    try:
+        article.domain = json['alternate'][0]['href']
+    except:
+        print 'error on href'
+        pass
+    
+    item = json['items'][0]
+    try:
+        article.google_id = item['id']
+    except:
+        print 'error on item id'
+        pass
+    
+    #shitty
+    try:
+        article.body = item['summary']['content']
+    except:
+        try: 
+            article.body = item['content']['content']
+        except:
+            pass
+        
+    try:
+        article.title = item['title']
+        article.published_on = datetime.datetime.fromtimestamp(int(item['published'])).strftime('%Y-%m-%d %H:%M:%S')
+        article.url = url
+        article.save()
+        return article
+    except Exception:
+        raise
+        print 'catastrophic error'
+        print Exception
+        return None
+    
+
+def share(request):
+    #if request.method != 'POST':
+    #    return HttpResponseNotFound('<h1>expecting post</h1>')
+    #data = simplejson.loads(request.raw_post_data)
+    data = request.GET
+    is_invalid = invalid_share(data)
+    article = None
+    if is_invalid:
+        return HttpResponse("0")
+        
+    try:
+        article = get_entry_data(request, data['url'])
+        print article
+    except Article.DoesNotExist:
+        return NottyResponse("not shared yet, fix this")
+      
+    try:
+        profile = UserProfile.objects.get(auth_key=data['auth'])
+    except:
+        return NottyResponse('bad auth key')
+
+    print 'ok'
+    print article
+    if share_article(article, profile):
+        return NottyResponse("already shared") 
+    else:
+        return NottyResponse("shared: %s" % article.title)
+    
+    
+    entry = get_entry_data(request, 'http://www.marksdailyapple.com/simmered-cranberry-sauce-and-spicy-cranberry-relish/')
+    
+    return HttpResponse("1")
+    
 def comment(request):
     data = request.GET
     is_invalid = invalid_comment(data)
@@ -126,9 +227,12 @@ def comment(request):
     
     print data
     try:
-        article = Article.objects.get(url = data['url'])
+        article = get_entry_data(request, data['url'])
     except Article.DoesNotExist:
         return NottyResponse("not shared yet, fix this")
+    
+    if not Article:
+        return NottyResponse("there was an error")
         
     try:
         profile = UserProfile.objects.get(auth_key=data['auth'])
@@ -187,9 +291,11 @@ def check_email(email):
 
 def get_contacts(user):
     auth = UserSocialAuth.objects.get(user=user)
-    gd_client = service.ContactsService()
-    gd_client.debug = 'true'
-    gd_client.SetAuthSubToken(auth.extra_data['access_token'])
+    client = service.ContactsService()
+    client.debug = 'true'
+    print auth.extra_data['access_token']
+    print auth.extra_data['refresh_token']
+    client.SetAuthSubToken(auth.extra_data['access_token'])
     #feed = gd_client.GetContactsFeed()
     #for i, entry in enumerate(feed.entry):
     #    print '\n%s %s' % (i+1, entry)
@@ -197,13 +303,15 @@ def get_contacts(user):
     #uri = "%s?updated-min=2007-03-16T00:00:00&max-results=500&orderby=lastmodified&sortorder=descending" % gd_client.GetFeedUri()
     contacts = []
     entries = []
-    uri = "%s?updated-min=2007-03-16T00:00:00&max-results=500&q=gmail.com" % gd_client.GetFeedUri()
-    feed = gd_client.GetContactsFeed(uri)
+    #uri = "%s?updated-min=2007-03-16T00:00:00&max-results=500&q=gmail.com" % gd_client.GetFeedUri()
+    print 'hi'
+    #print uri
+    feed = client.GetContactsFeed()
     next_link = feed.GetNextLink()
     entries.extend(feed.entry)
     
     while next_link:
-        feed = gd_client.GetContactsFeed(uri=next_link.href)
+        feed = client.GetContactsFeed(uri=next_link.href)
         entries.extend(feed.entry)
         next_link = feed.GetNextLink()
     for entry in entries:
@@ -227,7 +335,7 @@ def contacts(request):
             contacts = request.session.get('google_contacts_cached')
         else:
             contacts = get_contacts(user)
-            request.session['google_contacts_cached'] = contacts
+            #request.session['google_contacts_cached'] = contacts
             
         contact_emails = [contact.email for contact in contacts]
         

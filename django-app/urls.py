@@ -16,6 +16,7 @@ urlpatterns = patterns('',
     (r'^feed/(?P<email>.+)/(?P<auth_key>.+)/$', feeds.FollowingFeed()),
     
     (r'^post/$', articles.post),
+    (r'^share/$', articles.share),
     (r'^comment/$', articles.comment),
     (r'^comments/$', articles.comments),
     (r'^get/(?P<article_id>\d+)/$', articles.get),
