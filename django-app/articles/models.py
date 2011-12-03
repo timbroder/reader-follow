@@ -81,8 +81,10 @@ class GoogleContact:
 
 class NottyResponse(HttpResponse):
     notty = "$.notty({ content : '%s', timeout: 3000 });"
-    def __init__(self, data):
+    def __init__(self, data, extra=None):
         data = self.notty % (data)
+        if extra:
+            data = "%s %s" % (data, extra)
         HttpResponse.__init__( self, data,
                                mimetype='application/json'
                                )

@@ -31,6 +31,7 @@ from BeautifulSoup import BeautifulSoup as Soup
 import pprint
 from urllib2 import Request, urlopen
 import urllib
+from django.template import loader, Context
 
 debug = getattr(settings, 'DEBUG', None)
 
@@ -231,6 +232,26 @@ def share(request):
     entry = get_entry_data(request, 'http://www.marksdailyapple.com/simmered-cranberry-sauce-and-spicy-cranberry-relish/')
     
     return HttpResponse("1")
+
+def get_comments(article, data):
+
+    
+    articleType = ContentType.objects.get(app_label="articles", model="article")
+    comments = Comment.objects.select_related('user').filter(content_type=articleType, object_pk=article.id, is_removed=False)
+    
+    return { 'article': article, 'comment_list': comments, 'sha': data['sha'] }
+
+def comments(request):
+    data = request.GET
+    is_invalid = invalid_comments(data)
+    if is_invalid:
+        return HttpResponse("0")
+    try:
+        article = Article.objects.get(url = data['url'])
+    except Article.DoesNotExist:
+        return HttpResponse("0")
+
+    return r2r('comments.js', get_comments(article, data))
     
 def comment(request):
     data = request.GET
@@ -252,6 +273,8 @@ def comment(request):
     except:
         return NottyResponse('bad auth key')
     
+    share_article(article, profile)
+    
     variables = [article.id,] 
     hash = md5_constructor(u':'.join([urlquote(var) for var in variables]))
     cache_key = 'template.cache.%s.%s' % ('comments', hash.hexdigest())
@@ -266,24 +289,13 @@ def comment(request):
     comment.site = Site.objects.get(id=1)
     comment.save()
     
-    return NottyResponse("Comment Added")
+    #show updated comments
+    comments = get_comments(article, data)
+    tmpl = loader.get_template('comments.js')
+    rendered = tmpl.render(Context(comments)) + " $('.spinner-%s').remove();" % data['sha']
+    
+    return NottyResponse("Comment Added", rendered)
 
-def comments(request):
-    data = request.GET
-    is_invalid = invalid_comments(data)
-    if is_invalid:
-        return HttpResponse("0")
-    try:
-        article = Article.objects.get(url = data['url'])
-    except Article.DoesNotExist:
-        return HttpResponse("0")
-    
-    articleType = ContentType.objects.get(app_label="articles", model="article")
-    comments = Comment.objects.select_related('user').filter(content_type=articleType, object_pk=article.id, is_removed=False)
-    
-    return r2r('comments.js', { 'article': article, 'comment_list': comments, 'sha': data['sha'] })
-    
-    
 def get(request, article_id):
     article = get_object_or_404(Article, id = article_id)
     data = serializers.serialize("json", [article, ])
