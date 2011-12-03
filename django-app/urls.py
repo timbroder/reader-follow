@@ -17,6 +17,7 @@ urlpatterns = patterns('',
     
     (r'^post/$', articles.post),
     (r'^share/$', articles.share),
+    (r'^comment/on/(?P<article_id>.+)/$', articles.comment_on),
     (r'^comment/$', articles.comment),
     (r'^comments/$', articles.comments),
     (r'^get/(?P<article_id>\d+)/$', articles.get),

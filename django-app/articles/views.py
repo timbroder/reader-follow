@@ -4,14 +4,14 @@ from django.core import serializers
 from django.utils import simplejson 
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseNotFound
 from django.shortcuts import get_object_or_404, render_to_response as r2r
-from django.template import RequestContext, Context
+from django.template import RequestContext, Context, loader
 from django.utils.encoding import smart_unicode
 from django.views.decorators.cache import cache_page
 import datetime
 import settings
 import time
 from models import *
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from social_auth.models import UserSocialAuth
 from gdata.contacts import service, client
 import gdata
@@ -29,8 +29,7 @@ from django.core.cache import cache
 from BeautifulSoup import BeautifulSoup as Soup
 from urllib2 import Request, urlopen
 import urllib
-from django.template import loader, Context
-import helpers
+from django.core.context_processors import csrf
 
 debug = getattr(settings, 'DEBUG', None)
 
@@ -261,6 +260,38 @@ def comments(request):
         return HttpResponse("0")
 
     return r2r('comments.js', get_comments(article, data))
+
+def add_comment(request, article, profile, c):
+    variables = [article.id,] 
+    hash = md5_constructor(u':'.join([urlquote(var) for var in variables]))
+    cache_key = 'template.cache.%s.%s' % ('comments', hash.hexdigest())
+    cache.delete(cache_key)
+    cache_key = 'template.cache.%s.%s' % ('commenton', hash.hexdigest())
+    cache.delete(cache_key)
+    
+    comment = Comment();
+    comment.ip_address = request.META.get("REMOTE_ADDR", None)
+    comment.user = profile.user
+    comment.comment = c
+    comment.content_type = ContentType.objects.get(app_label="articles", model="article")
+    comment.object_pk = article.id
+    comment.site = Site.objects.get(id=1)
+    comment.save()
+
+@login_required
+@csrf_protect
+def comment_on(request, article_id):
+    profile = request.user.userprofile
+    article = get_object_or_404(Article, id=article_id)
+    if request.method == 'POST':
+        comment = request.POST['comment']
+        add_comment(request, article, profile, comment)
+    
+    data = { 'sha': None }
+    c = get_comments(article, data)
+    c.update(csrf(request))
+    return r2r('add_comment.html', c)
+    
     
 def comment(request):
     data = request.GET
@@ -282,20 +313,7 @@ def comment(request):
         return NottyResponse('bad auth key')
     
     share_article(article, profile)
-    
-    variables = [article.id,] 
-    hash = md5_constructor(u':'.join([urlquote(var) for var in variables]))
-    cache_key = 'template.cache.%s.%s' % ('comments', hash.hexdigest())
-    cache.delete(cache_key)
-    
-    comment = Comment();
-    comment.ip_address = request.META.get("REMOTE_ADDR", None)
-    comment.user = profile.user
-    comment.comment = data['comment']
-    comment.content_type = ContentType.objects.get(app_label="articles", model="article")
-    comment.object_pk = article.id
-    comment.site = Site.objects.get(id=1)
-    comment.save()
+    add_comment(request, article, profile, data['comment'])
     
     #show updated comments
     comments = get_comments(article, data)
