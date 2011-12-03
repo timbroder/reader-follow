@@ -29,6 +29,8 @@ from django.utils.http import urlquote
 from django.core.cache import cache
 from BeautifulSoup import BeautifulSoup as Soup
 import pprint
+from urllib2 import Request, urlopen
+import urllib
 
 debug = getattr(settings, 'DEBUG', None)
 
@@ -42,6 +44,17 @@ debug = getattr(settings, 'DEBUG', None)
 #        for attr in newobj:
 #            newobj[attr]=dump(newobj[attr])
 #    return newobj
+
+def dump(obj):
+  '''return a printable representation of an object for debugging'''
+  newobj=obj
+  if '__dict__' in dir(obj):
+    newobj=obj.__dict__
+    if ' object at ' in str(obj) and not newobj.has_key('__type__'):
+      newobj['__type__']=str(obj)
+    for attr in newobj:
+      newobj[attr]=dump(newobj[attr])
+  return newobj
 
 def test_invalids(data, tests):
     invalid = ''
@@ -289,13 +302,40 @@ def check_email(email):
     
     return True
 
+def refresh_token(auth):
+    token = gdata.gauth.OAuth2Token(client_id = getattr(settings, 'GOOGLE_OAUTH2_CLIENT_ID'),
+                                     client_secret = getattr(settings, 'GOOGLE_OAUTH2_CLIENT_SECRET'),
+                                     scope = ' '.join(getattr(settings, 'GOOGLE_OAUTH_EXTRA_SCOPE', [])),
+                                     user_agent = 'reader-follow', 
+                                     access_token = auth.extra_data['access_token'], 
+                                     refresh_token = auth.extra_data['refresh_token'])
+    body = urllib.urlencode({
+                             'grant_type': 'refresh_token',
+                             'client_id': token.client_id,
+                             'client_secret': token.client_secret,
+                             'refresh_token' : token.refresh_token
+                             })
+    headers = { 'user-agent': token.user_agent, }
+    print 'TOKEN'
+    print dump(token)
+    request = Request(token.token_uri, data=body, headers=headers)
+    response = simplejson.loads(urlopen(request).read())
+    print 'back'
+    print response
+    print response['access_token']
+    auth.extra_data['access_token'] = response['access_token']
+    auth.save()
+    return auth
+
 def get_contacts(user):
     auth = UserSocialAuth.objects.get(user=user)
     client = service.ContactsService()
     client.debug = 'true'
     print auth.extra_data['access_token']
     print auth.extra_data['refresh_token']
+    
     client.SetAuthSubToken(auth.extra_data['access_token'])
+    
     #feed = gd_client.GetContactsFeed()
     #for i, entry in enumerate(feed.entry):
     #    print '\n%s %s' % (i+1, entry)
@@ -306,7 +346,17 @@ def get_contacts(user):
     #uri = "%s?updated-min=2007-03-16T00:00:00&max-results=500&q=gmail.com" % gd_client.GetFeedUri()
     print 'hi'
     #print uri
-    feed = client.GetContactsFeed()
+    try:
+        feed = client.GetContactsFeed()
+    except Exception as e:
+        print 'exception'
+        print e.args[0]['reason']
+        if 'Token invalid' in e.args[0]['reason']:
+            print 'invaid'
+            auth = refresh_token(auth)
+            client.SetAuthSubToken(auth.extra_data['access_token'])
+            feed = client.GetContactsFeed()
+            
     next_link = feed.GetNextLink()
     entries.extend(feed.entry)
     
