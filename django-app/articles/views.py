@@ -13,7 +13,6 @@ import time
 from models import *
 from django.views.decorators.csrf import csrf_exempt
 from social_auth.models import UserSocialAuth
-#from pprint import pprint
 from gdata.contacts import service, client
 import gdata
 from follow import utils
@@ -28,7 +27,6 @@ from django.utils.hashcompat import md5_constructor
 from django.utils.http import urlquote
 from django.core.cache import cache
 from BeautifulSoup import BeautifulSoup as Soup
-import pprint
 from urllib2 import Request, urlopen
 import urllib
 from django.template import loader, Context
@@ -168,14 +166,14 @@ def get_entry_data(request, url):
     try:
         article.domain = json['alternate'][0]['href']
     except:
-        print 'error on href'
+        #print 'error on href'
         pass
     
     item = json['items'][0]
     try:
         article.google_id = item['id']
     except:
-        print 'error on item id'
+        #print 'error on item id'
         pass
     
     #shitty
@@ -195,8 +193,8 @@ def get_entry_data(request, url):
         return article
     except Exception:
         raise
-        print 'catastrophic error'
-        print Exception
+        #print 'catastrophic error'
+        #print Exception
         return None
     
 
@@ -212,7 +210,6 @@ def share(request):
         
     try:
         article = get_entry_data(request, data['url'])
-        print article
     except Article.DoesNotExist:
         return NottyResponse("not shared yet, fix this")
       
@@ -221,15 +218,10 @@ def share(request):
     except:
         return NottyResponse('bad auth key')
 
-    print 'ok'
-    print article
     if share_article(article, profile):
         return NottyResponse("already shared") 
     else:
         return NottyResponse("shared: %s" % article.title)
-    
-    
-    entry = get_entry_data(request, 'http://www.marksdailyapple.com/simmered-cranberry-sauce-and-spicy-cranberry-relish/')
     
     return HttpResponse("1")
 
@@ -259,7 +251,6 @@ def comment(request):
     if is_invalid:
         return HttpResponse("0")
     
-    print data
     try:
         article = get_entry_data(request, data['url'])
     except Article.DoesNotExist:
@@ -328,13 +319,8 @@ def refresh_token(auth):
                              'refresh_token' : token.refresh_token
                              })
     headers = { 'user-agent': token.user_agent, }
-    print 'TOKEN'
-    print dump(token)
     request = Request(token.token_uri, data=body, headers=headers)
     response = simplejson.loads(urlopen(request).read())
-    print 'back'
-    print response
-    print response['access_token']
     auth.extra_data['access_token'] = response['access_token']
     auth.save()
     return auth
@@ -343,28 +329,17 @@ def get_contacts(user):
     auth = UserSocialAuth.objects.get(user=user)
     client = service.ContactsService()
     client.debug = 'true'
-    print auth.extra_data['access_token']
-    print auth.extra_data['refresh_token']
     
     client.SetAuthSubToken(auth.extra_data['access_token'])
-    
-    #feed = gd_client.GetContactsFeed()
-    #for i, entry in enumerate(feed.entry):
-    #    print '\n%s %s' % (i+1, entry)
-    
     #uri = "%s?updated-min=2007-03-16T00:00:00&max-results=500&orderby=lastmodified&sortorder=descending" % gd_client.GetFeedUri()
     contacts = []
     entries = []
     #uri = "%s?updated-min=2007-03-16T00:00:00&max-results=500&q=gmail.com" % gd_client.GetFeedUri()
-    print 'hi'
-    #print uri
+
     try:
         feed = client.GetContactsFeed()
     except Exception as e:
-        print 'exception'
-        print e.args[0]['reason']
         if 'Token invalid' in e.args[0]['reason']:
-            print 'invaid'
             auth = refresh_token(auth)
             client.SetAuthSubToken(auth.extra_data['access_token'])
             feed = client.GetContactsFeed()
@@ -438,9 +413,6 @@ def follow(request, email):
         """
         
         subject = "%s is now following you on Google Reader"
-        #print subject % user.username
-        #print msg % user.username
-        #print [following.email]
         send_mail(subject % user.username, 
                   msg % user.username, 
                   'follow@readersharing.net',
