@@ -137,7 +137,7 @@ def post(request):
     except:
         return NottyResponse('bad auth key')
 
-    if share_article(article, profile):
+    if not share_article(article, profile):
         return NottyResponse("already shared") 
     else:
         return NottyResponse("shared: %s" % article.title)
@@ -218,7 +218,7 @@ def share(request):
     except:
         return NottyResponse('bad auth key')
 
-    if share_article(article, profile):
+    if not share_article(article, profile):
         return NottyResponse("already shared") 
     else:
         return NottyResponse("shared: %s" % article.title)
