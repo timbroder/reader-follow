@@ -2,7 +2,7 @@
 {% block title%}Add Comment {% endblock %}
 {% load cache %}
 {% block content %}
-{#% cache 86400 commenton article.id %#}
+{% cache 86400 commenton article.id %}
 {% for comment in comment_list %}
 	<p>{{ comment.user.username }} <em>({{ comment.submit_date }})</em></p>
 	<p>{{ comment.comment }}</p>
@@ -20,6 +20,6 @@
 
 <h2><a href="{{ articlr.url }}">{{ article.title }}</a></h2>
 {{ article.body }}
-{#% endcache %#}
+{% endcache %}
 {% include "_share.html" %}
 {% endblock %}
