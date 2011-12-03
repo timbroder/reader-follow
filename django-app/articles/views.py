@@ -30,6 +30,7 @@ from BeautifulSoup import BeautifulSoup as Soup
 from urllib2 import Request, urlopen
 import urllib
 from django.template import loader, Context
+import helpers
 
 debug = getattr(settings, 'DEBUG', None)
 
@@ -156,11 +157,27 @@ def get_entry_data(request, url):
     gd_client.debug = 'true'
     gd_client.SetAuthSubToken(auth.extra_data['access_token'])
 
-    search = gd_client.Get(get_id_url)
+    try:
+        search = gd_client.Get(get_id_url)
+    except Exception as e:
+        if 'Token invalid' in e.args[0]['reason']:
+            auth = refresh_token(auth)
+            gd_client.SetAuthSubToken(auth.extra_data['access_token'])
+            search = gd_client.Get(get_id_url)
+    
+    
     soup = Soup(search.__str__())
     entry_id = soup.findAll('number')[0].text
     get_entry_url = get_entry_url % entry_id
-    entry = gd_client.Get(get_entry_url, converter=str) 
+    
+    try:
+        entry = gd_client.Get(get_entry_url, converter=str)
+    except Exception as e:
+        if 'Token invalid' in e.args[0]['reason']:
+            auth = refresh_token(auth)
+            gd_client.SetAuthSubToken(auth.extra_data['access_token'])
+            entry = gd_client.Get(get_entry_url, converter=str)
+            
     json = simplejson.loads(entry.__str__())
 
     try:
