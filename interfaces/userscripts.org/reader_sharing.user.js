@@ -198,7 +198,7 @@ function main() {
 			var html = '<div class="add_comment">' + 
 					   '<div>' +
 					   '<textarea rows="2" cols="40">' +
-					   'comment your face</textarea>' +
+					   '</textarea>' +
 					   '  </div>' +
 					   '  <div>' +
 					   '    <input class="submit" type="submit" value="Add Comment" />' +
