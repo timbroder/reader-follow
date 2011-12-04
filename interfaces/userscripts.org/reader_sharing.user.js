@@ -125,7 +125,6 @@ function main() {
 				onerror: function () {}
 			});*/
 			var url = this.endpoint + 'share/?' + $.param(json);
-			console.log(url);
 			this.loader.addScript(url, this.sha);
 		},
 		
@@ -170,7 +169,7 @@ function main() {
 			var json = {
 					'url': this.href,
 					'sha': this.sha,
-					'auth': this.key,
+					'auth': this.key
 			};
 			
 			return json;
