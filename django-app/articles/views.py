@@ -286,7 +286,6 @@ def commenets_email(request, article, comments, by, when):
         for comment in comments:
             if comment.user not in users:
                 users.append(comment.user)
-        print users
         emails = [user.email for user in users]
             
         msg = """
@@ -298,10 +297,6 @@ def commenets_email(request, article, comments, by, when):
         """
         
         subject = "Comment: %s"
-        
-        print msg
-        print subject
-        print emails
         
         send_mail(subject % article.title, 
                   msg % (article.title, by.username, article.id, when), 
