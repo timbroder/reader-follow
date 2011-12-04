@@ -437,7 +437,7 @@ def contacts(request):
             contacts = request.session.get('google_contacts_cached')
         else:
             contacts = get_contacts(user)
-            #request.session['google_contacts_cached'] = contacts
+            request.session['google_contacts_cached'] = contacts
             
         contact_emails = [contact.email for contact in contacts]
         
