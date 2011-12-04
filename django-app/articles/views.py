@@ -30,6 +30,7 @@ from BeautifulSoup import BeautifulSoup as Soup
 from urllib2 import Request, urlopen
 import urllib
 from django.core.context_processors import csrf
+from django.utils.html import escape
 
 debug = getattr(settings, 'DEBUG', None)
 
@@ -194,10 +195,10 @@ def get_entry_data(request, url, auth_key):
     
     #shitty
     try:
-        article.body = item['summary']['content']
+        article.body = escape(item['summary']['content']).encode('utf-8')
     except:
         try: 
-            article.body = item['content']['content']
+            article.body = escape(item['content']['content']).encode('utf-8')
         except:
             pass
         
