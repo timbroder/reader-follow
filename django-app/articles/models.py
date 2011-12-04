@@ -9,6 +9,10 @@ from django.http import HttpResponse
 class Article(models.Model):
     title = models.CharField(max_length=255, unique=True)
     url = models.URLField()
+    
+    #his really should join o a domain object, don't care atm
+    domain = models.URLField(blank=True, null=True)
+    google_id = models.CharField(max_length=255, unique=True, blank=True, null=True)
     body = models.TextField()
     published_on = models.DateTimeField()
     users = models.ManyToManyField(User)
@@ -77,8 +81,10 @@ class GoogleContact:
 
 class NottyResponse(HttpResponse):
     notty = "$.notty({ content : '%s', timeout: 3000 });"
-    def __init__(self, data):
+    def __init__(self, data, extra=None):
         data = self.notty % (data)
+        if extra:
+            data = "%s %s" % (data, extra)
         HttpResponse.__init__( self, data,
                                mimetype='application/json'
                                )

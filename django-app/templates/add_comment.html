@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title%}Add Comment {% endblock %}
+{% load cache %}
+{% block content %}
+{% cache 86400 commenton article.id %}
+{% for comment in comment_list %}
+	<p>{{ comment.user.username }} <em>({{ comment.submit_date }})</em></p>
+	<p>{{ comment.comment }}</p>
+{% endfor %}
+<form id="add_comment" method="POST" action=".">{% csrf_token %}
+	<div class="add_comment">
+		<div>
+			<textarea rows="4" cols="40" name="comment"></textarea>
+		</div>
+		<div>
+			<input class="submit" type="submit" value="Add Comment" />
+		</div>
+	</div>
+</form>
+
+<h2><a href="{{ articlr.url }}">{{ article.title }}</a></h2>
+{{ article.body }}
+{% endcache %}
+{% include "_share.html" %}
+{% endblock %}

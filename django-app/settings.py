@@ -101,6 +101,8 @@ MIDDLEWARE_CLASSES = (
     #'django_authopenid.middleware.OpenIDMiddleware',
     'openid_consumer.middleware.OpenIDMiddleware',
     'waffle.middleware.WaffleMiddleware',
+    
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
 )
 
 ROOT_URLCONF = 'urls'
@@ -129,6 +131,8 @@ INSTALLED_APPS = (
     'waffle', 
     'django_ses',
     'google_analytics',
+    'django.contrib.comments',
+    'debug_toolbar',
 )
 
 # A sample logging configuration. The only tangible logging
@@ -154,6 +158,13 @@ LOGGING = {
     }
 }
 
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'cache',
+    }
+}
+
 TEMPLATE_CONTEXT_PROCESSORS = (
             'django.contrib.auth.context_processors.auth',
             'django.core.context_processors.debug',
@@ -163,6 +174,30 @@ TEMPLATE_CONTEXT_PROCESSORS = (
             'social_auth.context_processors.social_auth_by_type_backends',
            # 'django_authopenid.context_processors.authopenid',
         )
+
+INTERNAL_IPS = ('127.0.0.1',)
+
+def custom_show_toolbar(request):
+    return True # Always show toolbar, for example purposes only.
+
+DEBUG_TOOLBAR_CONFIG = {
+    'INTERCEPT_REDIRECTS': False,
+    'SHOW_TOOLBAR_CALLBACK': custom_show_toolbar,
+    'HIDE_DJANGO_SQL': False,
+    'ENABLE_STACKTRACES' : True,
+}
+
+DEBUG_TOOLBAR_PANELS = (
+    'debug_toolbar.panels.version.VersionDebugPanel',
+    'debug_toolbar.panels.timer.TimerDebugPanel',
+    'debug_toolbar.panels.settings_vars.SettingsVarsDebugPanel',
+    'debug_toolbar.panels.headers.HeaderDebugPanel',
+    'debug_toolbar.panels.request_vars.RequestVarsDebugPanel',
+    'debug_toolbar.panels.template.TemplateDebugPanel',
+    'debug_toolbar.panels.sql.SQLDebugPanel',
+    'debug_toolbar.panels.signals.SignalDebugPanel',
+    'debug_toolbar.panels.logger.LoggingPanel',
+)
 
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
@@ -188,9 +223,11 @@ AUTHENTICATION_BACKENDS = (
 
 SOCIAL_AUTH_ENABLED_BACKENDS = ('google-oauth2')
 
-GOOGLE_OAUTH_EXTRA_SCOPE = ['http://www.google.com/m8/feeds',]
+GOOGLE_OAUTH_EXTRA_SCOPE = ['http://www.google.com/m8/feeds', 'http://www.google.com/reader/api/', 'http://www.google.com/reader/atom/']
 SOCIAL_AUTH_DEFAULT_USERNAME = 'new_social_auth_user'
-SOCIAL_AUTH_UUID_LENGTH = 16
+SOCIAL_AUTH_UUID_LENGTH = 16
+#SOCIAL_AUTH_EXPIRATION = '31104000'
+SOCIAL_AUTH_SESSION_EXPIRATION = False
 
 #SOCIAL_AUTH_SESSION_EXPIRATION = False
 SOCIAL_AUTH_ASSOCIATE_BY_MAIL = True

@@ -8,6 +8,7 @@ from articles import feeds
 
 urlpatterns = patterns('',
     url(r'^admin/', include(admin.site.urls)),
+    (r'^comments/', include('django.contrib.comments.urls')),
     
     (r'^follow/(?P<email>.+)/$', articles.follow),
     (r'^unfollow/(?P<email>.+)/$', articles.unfollow),
@@ -15,6 +16,10 @@ urlpatterns = patterns('',
     (r'^feed/(?P<email>.+)/(?P<auth_key>.+)/$', feeds.FollowingFeed()),
     
     (r'^post/$', articles.post),
+    (r'^share/$', articles.share),
+    (r'^comment/on/(?P<article_id>.+)/$', articles.comment_on),
+    (r'^comment/$', articles.comment),
+    (r'^comments/$', articles.comments),
     (r'^get/(?P<article_id>\d+)/$', articles.get),
     url(r'', include('social_auth.urls')),
     url('^', include('follow.urls')),

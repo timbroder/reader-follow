@@ -4,23 +4,32 @@ from django.core import serializers
 from django.utils import simplejson 
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseNotFound
 from django.shortcuts import get_object_or_404, render_to_response as r2r
-from django.template import RequestContext, Context
+from django.template import RequestContext, Context, loader
 from django.utils.encoding import smart_unicode
 from django.views.decorators.cache import cache_page
 import datetime
 import settings
 import time
 from models import *
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from social_auth.models import UserSocialAuth
-#from pprint import pprint
 from gdata.contacts import service, client
+import gdata
 from follow import utils
 from follow.models import Follow
 from django.shortcuts import redirect
 import json 
 import waffle
 from django.core.mail import send_mail
+from django.contrib.comments import Comment
+from django.contrib.contenttypes.models import ContentType
+from django.utils.hashcompat import md5_constructor
+from django.utils.http import urlquote
+from django.core.cache import cache
+from BeautifulSoup import BeautifulSoup as Soup
+from urllib2 import Request, urlopen
+import urllib
+from django.core.context_processors import csrf
 
 debug = getattr(settings, 'DEBUG', None)
 
@@ -35,10 +44,19 @@ debug = getattr(settings, 'DEBUG', None)
 #            newobj[attr]=dump(newobj[attr])
 #    return newobj
 
-def invalid_post(data):
+def dump(obj):
+  '''return a printable representation of an object for debugging'''
+  newobj=obj
+  if '__dict__' in dir(obj):
+    newobj=obj.__dict__
+    if ' object at ' in str(obj) and not newobj.has_key('__type__'):
+      newobj['__type__']=str(obj)
+    for attr in newobj:
+      newobj[attr]=dump(newobj[attr])
+  return newobj
+
+def test_invalids(data, tests):
     invalid = ''
-    tests = ['url', 'body', 'published_on', 'title']
-    
     for test in tests:
         if test not in data:
             invalid = "%s %s," % (invalid, test)
@@ -46,6 +64,22 @@ def invalid_post(data):
     if invalid != '':
         return "Error: missing" + invalid.strip(',')
     return None
+
+def invalid_post(data):
+    tests = ['url', 'body', 'published_on', 'title']
+    return test_invalids(data, tests)
+
+def invalid_share(data):
+    tests = ['url', 'auth']
+    return test_invalids(data, tests)
+    
+def invalid_comment(data):
+    tests = ['url', 'auth', 'comment']
+    return test_invalids(data, tests)
+
+def invalid_comments(data):
+    tests = ['url', 'sha']
+    return test_invalids(data, tests)
 
 def convert_publish_date(in_string):
     return datetime.datetime.now()
@@ -56,6 +90,21 @@ def convert_publish_date(in_string):
     out_converted = time.strftime("%Y-%m-%d %H:%M", in_converted)
     return out_converted
 
+def share_article(article, profile):
+    try:
+        shared = Shared.objects.get(article=article,
+                        userprofile=profile
+                        )
+        #already shared
+        return False
+        #return JsonpResponse("alert('already shared');")
+    except Exception as e:
+        shared = Shared(article=article,
+                        userprofile=profile,
+                        shared_on=datetime.datetime.now()
+                        )
+        shared.save()
+        return True
 #{
 #    "url": "http: //www.google.com",
 #    "body": "mybody",
@@ -88,22 +137,221 @@ def post(request):
     except:
         return NottyResponse('bad auth key')
 
+    if not share_article(article, profile):
+        return NottyResponse("already shared") 
+    else:
+        return NottyResponse("shared: %s" % article.title)
+
+def get_entry_data(request, url):
+    get_id_url = "https://www.google.com/reader/api/0/search/items/ids?q=%s" % url
+    get_entry_url = "https://www.google.com/reader/api/0/stream/items/contents?freshness=false&client=reader-follow&i=%s"
     try:
-        shared = Shared.objects.get(article=article,
-                        userprofile=profile
-                        )
-        #already shared
-        return NottyResponse('already shared');
-        #return JsonpResponse("alert('already shared');")
+        article = Article.objects.get(url=url)
+        return article
+    except:
+        article = Article()
+    
+    auth = UserSocialAuth.objects.get(user=User.objects.get(id=10))
+    gd_client = service.ContactsService()
+    gd_client.debug = 'true'
+    gd_client.SetAuthSubToken(auth.extra_data['access_token'])
+
+    try:
+        search = gd_client.Get(get_id_url)
     except Exception as e:
-        shared = Shared(article=article,
-                        userprofile=profile,
-                        shared_on=datetime.datetime.now()
-                        )
-        shared.save()
-    return NottyResponse("shared: %s" % article.title)
+        if 'Token invalid' in e.args[0]['reason']:
+            auth = refresh_token(auth)
+            gd_client.SetAuthSubToken(auth.extra_data['access_token'])
+            search = gd_client.Get(get_id_url)
     
     
+    soup = Soup(search.__str__())
+    entry_id = soup.findAll('number')[0].text
+    get_entry_url = get_entry_url % entry_id
+    
+    try:
+        entry = gd_client.Get(get_entry_url, converter=str)
+    except Exception as e:
+        if 'Token invalid' in e.args[0]['reason']:
+            auth = refresh_token(auth)
+            gd_client.SetAuthSubToken(auth.extra_data['access_token'])
+            entry = gd_client.Get(get_entry_url, converter=str)
+            
+    json = simplejson.loads(entry.__str__())
+
+    try:
+        article.domain = json['alternate'][0]['href']
+    except:
+        #print 'error on href'
+        pass
+    
+    item = json['items'][0]
+    try:
+        article.google_id = item['id']
+    except:
+        #print 'error on item id'
+        pass
+    
+    #shitty
+    try:
+        article.body = item['summary']['content']
+    except:
+        try: 
+            article.body = item['content']['content']
+        except:
+            pass
+        
+    try:
+        article.title = item['title']
+        article.published_on = datetime.datetime.fromtimestamp(int(item['published'])).strftime('%Y-%m-%d %H:%M:%S')
+        article.url = url
+        article.save()
+        return article
+    except Exception:
+        raise
+        #print 'catastrophic error'
+        #print Exception
+        return None
+    
+
+def share(request):
+    #if request.method != 'POST':
+    #    return HttpResponseNotFound('<h1>expecting post</h1>')
+    #data = simplejson.loads(request.raw_post_data)
+    data = request.GET
+    is_invalid = invalid_share(data)
+    article = None
+    if is_invalid:
+        return HttpResponse("0")
+        
+    try:
+        article = get_entry_data(request, data['url'])
+    except Article.DoesNotExist:
+        return NottyResponse("not shared yet, fix this")
+      
+    try:
+        profile = UserProfile.objects.get(auth_key=data['auth'])
+    except:
+        return NottyResponse('bad auth key')
+
+    if not share_article(article, profile):
+        return NottyResponse("already shared") 
+    else:
+        return NottyResponse("shared: %s" % article.title)
+    
+    return HttpResponse("1")
+
+def get_comments(article, data):
+
+    
+    articleType = ContentType.objects.get(app_label="articles", model="article")
+    comments = Comment.objects.select_related('user').filter(content_type=articleType, object_pk=article.id, is_removed=False)
+    
+    return { 'article': article, 'comment_list': comments, 'sha': data['sha'] }
+
+def comments(request):
+    data = request.GET
+    is_invalid = invalid_comments(data)
+    if is_invalid:
+        return HttpResponse("0")
+    try:
+        article = Article.objects.get(url = data['url'])
+    except Article.DoesNotExist:
+        return HttpResponse("0")
+
+    return r2r('comments.js', get_comments(article, data))
+
+def add_comment(request, article, profile, c):
+    variables = [article.id,] 
+    hash = md5_constructor(u':'.join([urlquote(var) for var in variables]))
+    cache_key = 'template.cache.%s.%s' % ('comments', hash.hexdigest())
+    cache.delete(cache_key)
+    cache_key = 'template.cache.%s.%s' % ('commenton', hash.hexdigest())
+    cache.delete(cache_key)
+    
+    comment = Comment();
+    comment.ip_address = request.META.get("REMOTE_ADDR", None)
+    comment.user = profile.user
+    comment.comment = c
+    comment.content_type = ContentType.objects.get(app_label="articles", model="article")
+    comment.object_pk = article.id
+    comment.site = Site.objects.get(id=1)
+    comment.save()
+    
+    return comment
+    
+def commenets_email(request, article, comments, by, when):
+    if waffle.flag_is_active(request, 'commentemail'):
+        users = []
+        for comment in comments:
+            if comment.user not in users:
+                users.append(comment.user)
+        emails = [user.email for user in users]
+            
+        msg = """
+        %s
+        %s commented on an article in Google Reader
+        Continue the conversation: http://readersharing.net/comment/on/%s/
+       
+        (%s)
+        """
+        
+        subject = "Comment: %s"
+        
+        send_mail(subject % article.title, 
+                  msg % (article.title, by.username, article.id, when), 
+                  'follow@readersharing.net',
+                  emails, 
+                  fail_silently=False)
+@login_required
+@csrf_protect
+def comment_on(request, article_id):
+    profile = request.user.userprofile
+    article = get_object_or_404(Article, id=article_id)
+    data = { 'sha': None }
+    c = get_comments(article, data)
+    c.update(csrf(request))
+    
+    if request.method == 'POST':
+        comment = request.POST['comment']
+        comment = add_comment(request, article, profile, comment)
+        
+        commenets_email(request, article, c['comment_list'], request.user, comment.submit_date)
+
+    return r2r('add_comment.html', c)
+    
+    
+def comment(request):
+    data = request.GET
+    is_invalid = invalid_comment(data)
+    if is_invalid:
+        return HttpResponse("0")
+    
+    try:
+        article = get_entry_data(request, data['url'])
+    except Article.DoesNotExist:
+        return NottyResponse("not shared yet, fix this")
+    
+    if not Article:
+        return NottyResponse("there was an error")
+        
+    try:
+        profile = UserProfile.objects.get(auth_key=data['auth'])
+    except:
+        return NottyResponse('bad auth key')
+    
+    share_article(article, profile)
+    comment = add_comment(request, article, profile, data['comment'])
+    
+    #show updated comments
+    comments = get_comments(article, data)
+    tmpl = loader.get_template('comments.js')
+    rendered = tmpl.render(Context(comments)) + " $('.spinner-%s').remove();" % data['sha']
+    
+    commenets_email(request, article, comments['comment_list'], request.user, comment.submit_date)
+    
+    return NottyResponse("Comment Added", rendered)
+
 def get(request, article_id):
     article = get_object_or_404(Article, id = article_id)
     data = serializers.serialize("json", [article, ])
@@ -122,25 +370,50 @@ def check_email(email):
     
     return True
 
+def refresh_token(auth):
+    token = gdata.gauth.OAuth2Token(client_id = getattr(settings, 'GOOGLE_OAUTH2_CLIENT_ID'),
+                                     client_secret = getattr(settings, 'GOOGLE_OAUTH2_CLIENT_SECRET'),
+                                     scope = ' '.join(getattr(settings, 'GOOGLE_OAUTH_EXTRA_SCOPE', [])),
+                                     user_agent = 'reader-follow', 
+                                     access_token = auth.extra_data['access_token'], 
+                                     refresh_token = auth.extra_data['refresh_token'])
+    body = urllib.urlencode({
+                             'grant_type': 'refresh_token',
+                             'client_id': token.client_id,
+                             'client_secret': token.client_secret,
+                             'refresh_token' : token.refresh_token
+                             })
+    headers = { 'user-agent': token.user_agent, }
+    request = Request(token.token_uri, data=body, headers=headers)
+    response = simplejson.loads(urlopen(request).read())
+    auth.extra_data['access_token'] = response['access_token']
+    auth.save()
+    return auth
+
 def get_contacts(user):
     auth = UserSocialAuth.objects.get(user=user)
-    gd_client = service.ContactsService()
-    gd_client.debug = 'true'
-    gd_client.SetAuthSubToken(auth.extra_data['access_token'])
-    #feed = gd_client.GetContactsFeed()
-    #for i, entry in enumerate(feed.entry):
-    #    print '\n%s %s' % (i+1, entry)
+    client = service.ContactsService()
+    client.debug = 'true'
     
+    client.SetAuthSubToken(auth.extra_data['access_token'])
     #uri = "%s?updated-min=2007-03-16T00:00:00&max-results=500&orderby=lastmodified&sortorder=descending" % gd_client.GetFeedUri()
     contacts = []
     entries = []
-    uri = "%s?updated-min=2007-03-16T00:00:00&max-results=500&q=gmail.com" % gd_client.GetFeedUri()
-    feed = gd_client.GetContactsFeed(uri)
+    #uri = "%s?updated-min=2007-03-16T00:00:00&max-results=500&q=gmail.com" % gd_client.GetFeedUri()
+
+    try:
+        feed = client.GetContactsFeed()
+    except Exception as e:
+        if 'Token invalid' in e.args[0]['reason']:
+            auth = refresh_token(auth)
+            client.SetAuthSubToken(auth.extra_data['access_token'])
+            feed = client.GetContactsFeed()
+            
     next_link = feed.GetNextLink()
     entries.extend(feed.entry)
     
     while next_link:
-        feed = gd_client.GetContactsFeed(uri=next_link.href)
+        feed = client.GetContactsFeed(uri=next_link.href)
         entries.extend(feed.entry)
         next_link = feed.GetNextLink()
     for entry in entries:
@@ -164,7 +437,7 @@ def contacts(request):
             contacts = request.session.get('google_contacts_cached')
         else:
             contacts = get_contacts(user)
-            request.session['google_contacts_cached'] = contacts
+            #request.session['google_contacts_cached'] = contacts
             
         contact_emails = [contact.email for contact in contacts]
         
@@ -205,9 +478,6 @@ def follow(request, email):
         """
         
         subject = "%s is now following you on Google Reader"
-        #print subject % user.username
-        #print msg % user.username
-        #print [following.email]
         send_mail(subject % user.username, 
                   msg % user.username, 
                   'follow@readersharing.net',

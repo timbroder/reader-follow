@@ -3,3 +3,8 @@
 *.pyc
 *localsettings.py
 *DS_Store
+django-app/gdata
+django-app/django_social_auth-0.6.0-py2.7.egg-info
+django-app/atom
+django-app/oauth2
+django-app/social_auth
