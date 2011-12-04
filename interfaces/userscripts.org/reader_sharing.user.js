@@ -9,6 +9,7 @@
 // ==/UserScript==
 
 function main() {
+	var $j = jQuery.noConflict();
 	if (navigator.userAgent.toLowerCase().indexOf('chrome') > -1) {
 	    GM_getValue = function (key,def) {
 	        return localStorage[key] || def;
@@ -124,7 +125,7 @@ function main() {
 				},
 				onerror: function () {}
 			});*/
-			var url = this.endpoint + 'share/?' + $.param(json);
+			var url = this.endpoint + 'share/?' + $j.param(json);
 			this.loader.addScript(url, this.sha);
 		},
 		
@@ -134,11 +135,11 @@ function main() {
 				var $add_button = this.ui.get_add_comment();	
 				$add_button.find('.submit').on('click', function(event){
 					event.preventDefault();
-					$(this).after(self.ui.get_spinner(self.sha));
+					$j(this).after(self.ui.get_spinner(self.sha));
 					var json = self.get_json_href();
 					
-					json.comment = $(this).parents('.add_comment').find('textarea').val();
-					var url = self.endpoint + 'comment/?' + $.param(json);
+					json.comment = $j(this).parents('.add_comment').find('textarea').val();
+					var url = self.endpoint + 'comment/?' + $j.param(json);
 					self.loader.addScript(url, this.sha);
 				});
 				this.$comments_area.append($add_button);
@@ -147,7 +148,7 @@ function main() {
 		
 		display_comments: function() {
 			var json = this.get_json_href();
-			var url = this.endpoint + 'comments/?' + $.param(json);
+			var url = this.endpoint + 'comments/?' + $j.param(json);
 			this.loader.addScript(url, this.sha);
 		},
 		
@@ -176,7 +177,7 @@ function main() {
 		},
 		
 		destroy: function() {
-			$('script .' + this.sha).remove();
+			$j('script .' + this.sha).remove();
 		}
 	};
 	
@@ -187,11 +188,11 @@ function main() {
 	
 	ReaderUI.prototype = {
 		get_bar_button: function(text) {
-			return $('<span class="item-link link reader-sharing"><span class="link unselectable">' + text + '</span></span>').clone();
+			return $j('<span class="item-link link reader-sharing"><span class="link unselectable">' + text + '</span></span>').clone();
 		},
 		
 		get_comment_area: function() {
-			return $('<div class="card-comments"><div class="entry-comments"></div></div>').clone();
+			return $j('<div class="card-comments"><div class="entry-comments"></div></div>').clone();
 		},
 		
 		get_add_comment: function() {
@@ -204,12 +205,12 @@ function main() {
 					   '    <input class="submit" type="submit" value="Add Comment" />' +
 					   '  </div>' +
 					   '</div>';
-			return $(html).clone();
+			return $j(html).clone();
 		},
 		
 		get_spinner: function(sha) {
 			var html = '<img src="' + this.base_url + 'media/images/loader.gif" class="spinner-' + sha + '"/>';
-			return $(html).clone();
+			return $j(html).clone();
 		},
 		
 		get_comments_area: function($elm) {
@@ -244,7 +245,7 @@ function main() {
 		this.loader = new Loader();
 		this.ui = new ReaderUI(base_url);
 		
-		$('#viewer-entries-container').scroll(function() {
+		$j('#viewer-entries-container').scroll(function() {
 			self.update_ui();
 		});
 	};
@@ -264,8 +265,8 @@ function main() {
 		bind_menu: function() {
 			if (!this.settingsShown) {
 				var self = this,
-					$controls = $('#viewer-top-controls'),
-					$button = $('<a href="#">Reader Sharing Settings</a>');
+					$controls = $j('#viewer-top-controls'),
+					$button = $j('<a href="#">Reader Sharing Settings</a>');
 				
 				$button.on('click', function(){
 					self.show_modal(true);
@@ -278,9 +279,9 @@ function main() {
 		check_ui_load: function() {
 			var self = this;
 			setTimeout(function () {
-				if($('#entries .entry').length === 0) {
+				if($j('#entries .entry').length === 0) {
 					if (!self.settingsShown) {
-						if($('#no-entries-msg').length !== 0) {
+						if($j('#no-entries-msg').length !== 0) {
 							self.bind_menu();
 						}
 					}
@@ -295,15 +296,15 @@ function main() {
 		
 		update_ui: function () {
 			var self = this;
-			$('.entry-container:not(.reader-shareable)').each(function () {
+			$j('.entry-container:not(.reader-shareable)').each(function () {
 				//self.add_button($(this));
-				self.articles.push(new Article(self.key, self.ui, self.loader, $(this)));
+				self.articles.push(new Article(self.key, self.ui, self.loader, $j(this)));
 			});
 		}
 
 	};
 
-	$(function(){
+	$j(function(){
 		new ReaderSharing('http://readersharing.net/');
 	});
 	
@@ -370,7 +371,6 @@ GM_addStyle(style);
 
 var SUC_script_num = 118173; // Change this to the number given to the script by userscripts.org (check the address bar)
 try{function updateCheck(forced){if ((forced) || (parseInt(GM_getValue('SUC_last_update', '0')) + 86400000 <= (new Date().getTime()))){try{GM_xmlhttpRequest({method: 'GET',url: 'http://userscripts.org/scripts/source/'+SUC_script_num+'.meta.js?'+new Date().getTime(),headers: {'Cache-Control': 'no-cache'},onload: function(resp){var local_version, remote_version, rt, script_name;rt=resp.responseText;GM_setValue('SUC_last_update', new Date().getTime()+'');remote_version=parseInt(/@uso:version\s*(.*?)\s*$/m.exec(rt)[1]);local_version=parseInt(GM_getValue('SUC_current_version', '-1'));if(local_version!=-1){script_name = (/@name\s*(.*?)\s*$/m.exec(rt))[1];GM_setValue('SUC_target_script_name', script_name);if (remote_version > local_version){if(confirm('There is an update available for the Greasemonkey script "'+script_name+'."\nWould you like to go to the install page now?')){GM_openInTab('http://userscripts.org/scripts/show/'+SUC_script_num);GM_setValue('SUC_current_version', remote_version);}}else if (forced)alert('No update is available for "'+script_name+'."');}else GM_setValue('SUC_current_version', remote_version+'');}});}catch (err){if (forced)alert('An error occurred while checking for updates:\n'+err);}}}GM_registerMenuCommand(GM_getValue('SUC_target_script_name', '???') + ' - Manual Update Check', function(){updateCheck(true);});updateCheck(false);}catch(err){}
-
 
 
 

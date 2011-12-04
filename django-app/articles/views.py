@@ -151,7 +151,7 @@ def get_entry_data(request, url):
     except:
         article = Article()
     
-    auth = UserSocialAuth.objects.get(user=User.objects.get(id=10))
+    auth = UserSocialAuth.objects.get(user=request.user)
     gd_client = service.ContactsService()
     gd_client.debug = 'true'
     gd_client.SetAuthSubToken(auth.extra_data['access_token'])
