@@ -277,19 +277,52 @@ def add_comment(request, article, profile, c):
     comment.object_pk = article.id
     comment.site = Site.objects.get(id=1)
     comment.save()
-
+    
+    return comment
+    
+def commenets_email(request, article, comments, by, when):
+    if waffle.flag_is_active(request, 'commentemail'):
+        users = []
+        for comment in comments:
+            if comment.user not in users:
+                users.append(comment.user)
+        print users
+        emails = [user.email for user in users]
+            
+        msg = """
+        %s
+        %s commented on an article in Google Reader
+        Continue the conversation: http://readersharing.net/comment/on/%s/
+       
+        (%s)
+        """
+        
+        subject = "Comment: %s"
+        
+        print msg
+        print subject
+        print emails
+        
+        send_mail(subject % article.title, 
+                  msg % (article.title, by.username, article.id, when), 
+                  'follow@readersharing.net',
+                  emails, 
+                  fail_silently=False)
 @login_required
 @csrf_protect
 def comment_on(request, article_id):
     profile = request.user.userprofile
     article = get_object_or_404(Article, id=article_id)
-    if request.method == 'POST':
-        comment = request.POST['comment']
-        add_comment(request, article, profile, comment)
-    
     data = { 'sha': None }
     c = get_comments(article, data)
     c.update(csrf(request))
+    
+    if request.method == 'POST':
+        comment = request.POST['comment']
+        comment = add_comment(request, article, profile, comment)
+        
+        commenets_email(request, article, c['comment_list'], request.user, comment.submit_date)
+
     return r2r('add_comment.html', c)
     
     
@@ -313,12 +346,14 @@ def comment(request):
         return NottyResponse('bad auth key')
     
     share_article(article, profile)
-    add_comment(request, article, profile, data['comment'])
+    comment = add_comment(request, article, profile, data['comment'])
     
     #show updated comments
     comments = get_comments(article, data)
     tmpl = loader.get_template('comments.js')
     rendered = tmpl.render(Context(comments)) + " $('.spinner-%s').remove();" % data['sha']
+    
+    commenets_email(request, article, comments['comment_list'], request.user, comment.submit_date)
     
     return NottyResponse("Comment Added", rendered)
 
