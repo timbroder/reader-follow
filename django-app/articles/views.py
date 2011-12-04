@@ -142,7 +142,7 @@ def post(request):
     else:
         return NottyResponse("shared: %s" % article.title)
 
-def get_entry_data(request, url):
+def get_entry_data(request, url, auth_key):
     get_id_url = "https://www.google.com/reader/api/0/search/items/ids?q=%s" % url
     get_entry_url = "https://www.google.com/reader/api/0/stream/items/contents?freshness=false&client=reader-follow&i=%s"
     try:
@@ -150,8 +150,8 @@ def get_entry_data(request, url):
         return article
     except:
         article = Article()
-    
-    auth = UserSocialAuth.objects.get(user=request.user)
+    profile = UserProfile.objects.get(auth_key=auth_key)
+    auth = UserSocialAuth.objects.get(user=profile.user)
     gd_client = service.ContactsService()
     gd_client.debug = 'true'
     gd_client.SetAuthSubToken(auth.extra_data['access_token'])
@@ -225,7 +225,7 @@ def share(request):
         return HttpResponse("0")
         
     try:
-        article = get_entry_data(request, data['url'])
+        article = get_entry_data(request, data['url'], data['auth'])
     except Article.DoesNotExist:
         return NottyResponse("not shared yet, fix this")
       
@@ -328,7 +328,7 @@ def comment(request):
         return HttpResponse("0")
     
     try:
-        article = get_entry_data(request, data['url'])
+        article = get_entry_data(request, data['url'], data['auth'])
     except Article.DoesNotExist:
         return NottyResponse("not shared yet, fix this")
     
