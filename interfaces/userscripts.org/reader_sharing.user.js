@@ -5,7 +5,7 @@
 // @include        http://www.google.com/reader/view/*
 // @include        https://www.google.com/reader/view/*
 // @require        http://cdnjs.cloudflare.com/ajax/libs/jquery/1.7/jquery.min.js
-// @version        2.0
+// @version        2.1
 // ==/UserScript==
 
 function main() {
