@@ -5,7 +5,7 @@
 
 {% block content %}
 <div>
-	<p>Everyone you follow: <a href="/feed/{{ user.email }}/{{ user.get_profile.auth_key }}/">Feed</a></p>
+	<p>Aggregate feed of everyone you follow: <a href="https://www.google.com/reader/view/feed/http://readersharing.net/feed/{{ user.email }}/{{ user.get_profile.auth_key }}/">Show in Reader</a></p>
 	<p>Auth Key for {{ user.username}}: {{ user.get_profile.auth_key }}</p>
 </div>
 <div style="width: 700px">
@@ -32,7 +32,7 @@
 				<td>{% if contact.email in signed_up_emails %}X{% endif %}</td>
 				<td>{{ contact.name }}</td>
 				<td>{{ contact.email }}</td>
-				<td>{% if contact.email in signed_up_emails %}<a href="/shared/{{ contact.email }}/">feed</a>{% endif %}</td>
+				<td>{% if contact.email in signed_up_emails %}<a href="https://www.google.com/reader/view/feed/http://readersharing.net/shared/{{ contact.email }}/">Show in Reader</a>{% endif %}</td>
 			</tr>
 			{% endfor %}
 		</tbody>
