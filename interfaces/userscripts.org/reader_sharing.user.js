@@ -9,6 +9,13 @@
 // ==/UserScript==
 
 function main() {
+	// Array Remove - By John Resig (MIT Licensed)
+	Array.prototype.remove = function(from, to) {
+	  var rest = this.slice((to || from) + 1 || this.length);
+	  this.length = from < 0 ? this.length + from : from;
+	  return this.push.apply(this, rest);
+	};
+	
 	var $j = jQuery.noConflict();
 	if (navigator.userAgent.toLowerCase().indexOf('chrome') > -1) {
 	    GM_getValue = function (key,def) {
@@ -40,7 +47,7 @@ function main() {
 			script.src = url;
 			
 			if (clazz !== null ) {
-				script.className = clazz;
+				script.className = 'script-' + clazz;
 			}
 			
 			this.body.appendChild(script);
@@ -68,6 +75,8 @@ function main() {
 			this.published_on = this.$container.find('.entry-date').text();
 			
 			this.sha = SHA1(this.href);
+			this.$container.addClass('read-' + this.sha);
+			
 			this.$comments_area = this.ui.get_comments_area(this.$container);
 			
 			this.display_comments();
@@ -177,7 +186,13 @@ function main() {
 		},
 		
 		destroy: function() {
-			$j('script .' + this.sha).remove();
+			$j($j('.script-' + this.sha)).remove();
+			this.$share_button.remove();
+			this.$comment_button.remove();
+		},
+		
+		exists: function() {
+			return $j('div .read-' + this.sha).size() > 0;
 		}
 	};
 	
@@ -298,8 +313,18 @@ function main() {
 			var self = this;
 			$j('.entry-container:not(.reader-shareable)').each(function () {
 				//self.add_button($(this));
-				self.articles.push(new Article(self.key, self.ui, self.loader, $j(this)));
+				var article = new Article(self.key, self.ui, self.loader, $j(this));
+				self.articles.push(article);
 			});
+
+			if (self.articles.length > 15) {
+				for (var i = 0; i < self.articles.length; i++) {
+					if (!self.articles[i].exists()) {
+						self.articles[i].destroy();
+						self.articles.remove(i);
+					}
+				}
+			}
 		}
 
 	};
