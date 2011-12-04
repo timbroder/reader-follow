@@ -132,7 +132,7 @@ INSTALLED_APPS = (
     'django_ses',
     'google_analytics',
     'django.contrib.comments',
-    #'debug_toolbar',
+    'debug_toolbar',
 )
 
 # A sample logging configuration. The only tangible logging
@@ -178,7 +178,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 INTERNAL_IPS = ('127.0.0.1',)
 
 def custom_show_toolbar(request):
-    return True # Always show toolbar, for example purposes only.
+    return request.META['REMOTE_ADDR'] in INTERNAL_IPS
 
 DEBUG_TOOLBAR_CONFIG = {
     'INTERCEPT_REDIRECTS': False,
