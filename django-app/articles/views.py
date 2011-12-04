@@ -303,7 +303,8 @@ def commenets_email(request, article, comments, by, when):
                   'follow@readersharing.net',
                   emails, 
                   fail_silently=False)
-@login_required
+
+@login_required(login_url='/login/google-oauth2/')
 @csrf_protect
 def comment_on(request, article_id):
     profile = request.user.userprofile
