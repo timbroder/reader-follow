@@ -195,10 +195,10 @@ def get_entry_data(request, url, auth_key):
     
     #shitty
     try:
-        article.body = escape(item['summary']['content']).encode('utf-8')
+        article.body = unicode(escape(item['summary']['content']), "utf-8", errors="replace")
     except:
         try: 
-            article.body = escape(item['content']['content']).encode('utf-8')
+            article.body = unicode(escape(item['content']['content']), "utf-8", errors="replace")
         except:
             pass
         
