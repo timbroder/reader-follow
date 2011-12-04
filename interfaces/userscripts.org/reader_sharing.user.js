@@ -5,7 +5,7 @@
 // @include        http://www.google.com/reader/view/*
 // @include        https://www.google.com/reader/view/*
 // @require        http://cdnjs.cloudflare.com/ajax/libs/jquery/1.7/jquery.min.js
-// @version        1.1.0
+// @version        2.0
 // ==/UserScript==
 
 function main() {
@@ -46,11 +46,10 @@ function main() {
 		}
 	};
 	
-	var Article = function(key, factory, loader, base_url, $article) {
+	var Article = function(key, factory, loader, $article) {
 		this.key = key;
 		this.ui = factory;
 		this.loader = loader;
-		this.endpoint = base_url;
 		
 		this.init($article);
 	};
@@ -58,6 +57,7 @@ function main() {
 	Article.prototype = {
 		init: function($article) {
 			var self = this;
+			this.endpoint = 'http://readersharing.net/';
 			this.$container = $article;
 			this.$container.addClass('reader-shareable');
 			this.$action_bar = this.$container.parents('.card-common').find('.card-actions');
@@ -110,7 +110,7 @@ function main() {
 		
 		share: function() {
 			var self = this,
-				json = this.get_json_data();
+				json = this.get_json_href();
 			delete json.sha;
 		
 			/*GM_xmlhttpRequest({
@@ -124,7 +124,7 @@ function main() {
 				},
 				onerror: function () {}
 			});*/
-			var url = this.endpoint + 'post/?' + $.param(json);
+			var url = this.endpoint + 'share/?' + $.param(json);
 			console.log(url);
 			this.loader.addScript(url, this.sha);
 		},
@@ -135,10 +135,8 @@ function main() {
 				var $add_button = this.ui.get_add_comment();	
 				$add_button.find('.submit').on('click', function(event){
 					event.preventDefault();
-					var json = self.get_json_data();
-					delete json.body;
-					delete json.published_on;
-					delete json.title;
+					$(this).after(self.ui.get_spinner(self.sha));
+					var json = self.get_json_href();
 					
 					json.comment = $(this).parents('.add_comment').find('textarea').val();
 					var url = self.endpoint + 'comment/?' + $.param(json);
@@ -171,7 +169,8 @@ function main() {
 		get_json_href: function() {
 			var json = {
 					'url': this.href,
-					'sha': this.sha
+					'sha': this.sha,
+					'auth': this.key,
 			};
 			
 			return json;
@@ -182,7 +181,8 @@ function main() {
 		}
 	};
 	
-	var ReaderUI = function() {
+	var ReaderUI = function(base_url) {
+		this.base_url = base_url;
 		this.key = GM_getValue("greader_key");
 	};
 	
@@ -205,6 +205,11 @@ function main() {
 					   '    <input class="submit" type="submit" value="Add Comment" />' +
 					   '  </div>' +
 					   '</div>';
+			return $(html).clone();
+		},
+		
+		get_spinner: function(sha) {
+			var html = '<img src="' + this.base_url + 'media/images/loader.gif" class="spinner-' + sha + '"/>';
 			return $(html).clone();
 		},
 		
@@ -238,7 +243,7 @@ function main() {
 
 		this.show_modal(false);
 		this.loader = new Loader();
-		this.ui = new ReaderUI();
+		this.ui = new ReaderUI(base_url);
 		
 		$('#viewer-entries-container').scroll(function() {
 			self.update_ui();
@@ -293,7 +298,7 @@ function main() {
 			var self = this;
 			$('.entry-container:not(.reader-shareable)').each(function () {
 				//self.add_button($(this));
-				self.articles.push(new Article(self.key, self.ui, self.loader, self.base_url, $(this)));
+				self.articles.push(new Article(self.key, self.ui, self.loader, $(this)));
 			});
 		}
 
