@@ -132,7 +132,7 @@ INSTALLED_APPS = (
     'django_ses',
     'google_analytics',
     'django.contrib.comments',
-    'debug_toolbar',
+    #'debug_toolbar',
 )
 
 # A sample logging configuration. The only tangible logging
