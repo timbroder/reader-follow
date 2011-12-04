@@ -346,7 +346,7 @@ def comment(request):
     #show updated comments
     comments = get_comments(article, data)
     tmpl = loader.get_template('comments.js')
-    rendered = tmpl.render(Context(comments)) + " $('.spinner-%s').remove();" % data['sha']
+    rendered = tmpl.render(Context(comments)) + " jQuery('.spinner-%s').remove();" % data['sha']
     
     commenets_email(request, article, comments['comment_list'], request.user, comment.submit_date)
     

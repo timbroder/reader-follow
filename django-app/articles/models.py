@@ -80,7 +80,7 @@ class GoogleContact:
 
 
 class NottyResponse(HttpResponse):
-    notty = "$.notty({ content : '%s', timeout: 3000 });"
+    notty = "jQuery.notty({ content : '%s', timeout: 3000 });"
     def __init__(self, data, extra=None):
         data = self.notty % (data)
         if extra:
@@ -92,7 +92,7 @@ class NottyResponse(HttpResponse):
 class JsonpResponse(HttpResponse):
     def __init__(self, data):
         json = simplejson.dumps(data)
-        jsonp = "$(%s)" % (json)
+        jsonp = "jQuery(%s)" % (json)
         HttpResponse.__init__( self, jsonp,
                                mimetype='application/json'
                                )

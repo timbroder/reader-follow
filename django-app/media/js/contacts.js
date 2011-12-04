@@ -1,5 +1,5 @@
-$(document).ready(function() {
-    $('#contacts').dataTable( {
+jQuery(document).ready(function() {
+	jQuery('#contacts').dataTable( {
 		"bJQueryUI": true,
 		"sScrollY": "400px",
         "bPaginate": false,
