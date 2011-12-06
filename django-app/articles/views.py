@@ -160,7 +160,7 @@ def get_entry_data(request, url, auth_key):
     try:
         search = gd_client.Get(get_id_url)
     except Exception as e:
-        if 'Token invalid' in e.args[0]['reason']:
+        if 'Token invalid' in e.args[0]['reason'] or True:
             auth = refresh_token(auth)
             gd_client.SetAuthSubToken(auth.extra_data['access_token'])
             search = gd_client.Get(get_id_url)
@@ -173,7 +173,7 @@ def get_entry_data(request, url, auth_key):
     try:
         entry = gd_client.Get(get_entry_url, converter=str)
     except Exception as e:
-        if 'Token invalid' in e.args[0]['reason']:
+        if 'Token invalid' in e.args[0]['reason'] or True:
             auth = refresh_token(auth)
             gd_client.SetAuthSubToken(auth.extra_data['access_token'])
             entry = gd_client.Get(get_entry_url, converter=str)
@@ -376,7 +376,7 @@ def refresh_token(auth):
     token = gdata.gauth.OAuth2Token(client_id = getattr(settings, 'GOOGLE_OAUTH2_CLIENT_ID'),
                                      client_secret = getattr(settings, 'GOOGLE_OAUTH2_CLIENT_SECRET'),
                                      scope = ' '.join(getattr(settings, 'GOOGLE_OAUTH_EXTRA_SCOPE', [])),
-                                     user_agent = 'reader-follow', 
+                                     user_agent = 'ReaderSharing.net', 
                                      access_token = auth.extra_data['access_token'], 
                                      refresh_token = auth.extra_data['refresh_token'])
     body = urllib.urlencode({
@@ -406,7 +406,7 @@ def get_contacts(user):
     try:
         feed = client.GetContactsFeed()
     except Exception as e:
-        if 'Token invalid' in e.args[0]['reason']:
+        if 'Token invalid' in e.args[0]['reason'] or True:
             auth = refresh_token(auth)
             client.SetAuthSubToken(auth.extra_data['access_token'])
             feed = client.GetContactsFeed()
