@@ -45,17 +45,6 @@ debug = getattr(settings, 'DEBUG', None)
 #            newobj[attr]=dump(newobj[attr])
 #    return newobj
 
-def dump(obj):
-  '''return a printable representation of an object for debugging'''
-  newobj=obj
-  if '__dict__' in dir(obj):
-    newobj=obj.__dict__
-    if ' object at ' in str(obj) and not newobj.has_key('__type__'):
-      newobj['__type__']=str(obj)
-    for attr in newobj:
-      newobj[attr]=dump(newobj[attr])
-  return newobj
-
 def test_invalids(data, tests):
     invalid = ''
     for test in tests:
@@ -151,8 +140,13 @@ def get_entry_data(request, url, auth_key):
         return article
     except:
         article = Article()
-    profile = UserProfile.objects.get(auth_key=auth_key)
-    auth = UserSocialAuth.objects.get(user=profile.user)
+    
+    try:
+        profile = UserProfile.objects.get(auth_key=auth_key)
+        auth = UserSocialAuth.objects.get(user=profile.user)
+    except:
+        return NottyResponse("there seems to be an error with your auth key or account")
+
     gd_client = service.ContactsService()
     gd_client.debug = 'true'
     gd_client.SetAuthSubToken(auth.extra_data['access_token'])
@@ -166,9 +160,12 @@ def get_entry_data(request, url, auth_key):
             search = gd_client.Get(get_id_url)
     
     
-    soup = Soup(search.__str__())
-    entry_id = soup.findAll('number')[0].text
-    get_entry_url = get_entry_url % entry_id
+    try:
+        soup = Soup(search.__str__())
+        entry_id = soup.findAll('number')[0].text
+        get_entry_url = get_entry_url % entry_id
+    except:
+        return NottyResponse("there was an error finding this in reader. admin notified, will fix soon!") 
     
     try:
         entry = gd_client.Get(get_entry_url, converter=str)
@@ -177,6 +174,9 @@ def get_entry_data(request, url, auth_key):
             auth = refresh_token(auth)
             gd_client.SetAuthSubToken(auth.extra_data['access_token'])
             entry = gd_client.Get(get_entry_url, converter=str)
+        else:
+            return NottyResponse("auth problems. admin notified, will fix soon!") 
+        
             
     json = simplejson.loads(entry.__str__())
 
@@ -229,6 +229,9 @@ def share(request):
         article = get_entry_data(request, data['url'], data['auth'])
     except Article.DoesNotExist:
         return NottyResponse("not shared yet, fix this")
+    
+    if isinstance(article, NottyResponse):
+        return article
       
     try:
         profile = UserProfile.objects.get(auth_key=data['auth'])
@@ -333,6 +336,9 @@ def comment(request):
         article = get_entry_data(request, data['url'], data['auth'])
     except Article.DoesNotExist:
         return NottyResponse("not shared yet, fix this")
+
+    if isinstance(article, NottyResponse):
+        return article
     
     if not Article:
         return NottyResponse("there was an error")
@@ -502,6 +508,4 @@ def unfollow(request, email):
         pass
         
     return redirect('/')
-    
-    
     
