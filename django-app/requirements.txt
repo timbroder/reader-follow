@@ -11,3 +11,5 @@ django-waffle
 boto
 django-ses
 google-django-analytics
+raven
+django-sentry

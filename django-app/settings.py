@@ -133,30 +133,10 @@ INSTALLED_APPS = (
     'google_analytics',
     'django.contrib.comments',
     'debug_toolbar',
+    'sentry',
+    'raven.contrib.django',
+    'south',
 )
-
-# A sample logging configuration. The only tangible logging
-# performed by this configuration is to send an email to
-# the site admins on every HTTP 500 error.
-# See http://docs.djangoproject.com/en/dev/topics/logging for
-# more details on how to customize your logging configuration.
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'mail_admins': {
-            'level': 'ERROR',
-            'class': 'django.utils.log.AdminEmailHandler'
-        }
-    },
-    'loggers': {
-        'django.request': {
-            'handlers': ['mail_admins'],
-            'level': 'ERROR',
-            'propagate': True,
-        },
-    }
-}
 
 CACHES = {
     'default': {
@@ -171,7 +151,9 @@ TEMPLATE_CONTEXT_PROCESSORS = (
             'django.core.context_processors.i18n',
             'django.core.context_processors.media',
             'django.core.context_processors.request',
+            'raven.contrib.django.middleware.SentryResponseErrorIdMiddleware',
             'social_auth.context_processors.social_auth_by_type_backends',
+            'raven.contrib.django.middleware.Sentry404CatchMiddleware',
            # 'django_authopenid.context_processors.authopenid',
         )
 
@@ -235,6 +217,42 @@ SOCIAL_AUTH_ASSOCIATE_BY_MAIL = True
 EMAIL_BACKEND = 'django_ses.SESBackend'
 
 GOOGLE_ANALYTICS_MODEL = True
+
+SENTRY_KEY = 'my secret key'
+SENTRY_SERVERS = ['http://sentry.local/store/']
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': True,
+    'root': {
+        'level': 'WARNING',
+        'handlers': ['sentry'],
+    },
+    'formatters': {
+        'verbose': {
+            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
+        },
+    },
+    'handlers': {
+        'sentry': {
+            'level': 'DEBUG',
+            'class': 'raven.contrib.django.handlers.SentryHandler',
+            'formatter': 'verbose'
+        },
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose'
+        }
+    },
+    'loggers': {
+        'sentry.errors': {
+            'level': 'DEBUG',
+            'handlers': ['console'],
+            'propagate': False,
+        },
+    },
+}
 
 try:
     from localsettings import *

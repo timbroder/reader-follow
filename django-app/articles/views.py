@@ -31,6 +31,7 @@ from urllib2 import Request, urlopen
 import urllib
 from django.core.context_processors import csrf
 from django.utils.html import escape
+import logging
 
 debug = getattr(settings, 'DEBUG', None)
 
@@ -503,6 +504,7 @@ def contacts(request):
                                    'user': user })
     
 def home(request):
+    #logging.info('test', exc_info=True, extra={'request': request,})
     return contacts(request)
 
 #make current user follow
