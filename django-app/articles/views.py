@@ -135,6 +135,8 @@ def post(request):
 def get_entry_data(request, url, auth_key):
     get_id_url = "https://www.google.com/reader/api/0/search/items/ids?q=%s" % url
     get_entry_url = "https://www.google.com/reader/api/0/stream/items/contents?freshness=false&client=reader-follow&i=%s"
+    find_feed_url = "https://www.google.com/reader/api/0/feed-finder?q=%s" % url
+    get_feed_url = "http://www.google.com/reader/atom/feed/%s?n=200"
     try:
         article = Article.objects.get(url=url)
         return article
@@ -151,6 +153,8 @@ def get_entry_data(request, url, auth_key):
     gd_client.debug = 'true'
     gd_client.SetAuthSubToken(auth.extra_data['access_token'])
 
+    print 'share'
+    print get_id_url
     try:
         search = gd_client.Get(get_id_url)
     except Exception as e:
@@ -161,14 +165,43 @@ def get_entry_data(request, url, auth_key):
     
     
     try:
+        print search.__str__
         soup = Soup(search.__str__())
+        
         entry_id = soup.findAll('number')[0].text
-        get_entry_url = get_entry_url % entry_id
+        get_entry_url_full = get_entry_url % entry_id
     except:
-        return NottyResponse("there was an error finding this in reader. admin notified, will fix soon!") 
+        try:
+            find = gd_client.Get(find_feed_url)
+            soup = Soup(find.__str__())
+            links = soup.findAll('ns0:link')
+            for link in links:
+                if link['rel'] != 'self':
+                    found = False
+                    get_feed_url = get_feed_url % link['href']
+                    print get_feed_url
+                    rss = gd_client.Get(get_feed_url) 
+                    #print get_feed_url % link['href']
+                    print Soup(rss.__str__()).prettify()
+                    #print Soup(rss.__str__()).findAll('ns0:entry')
+                    for entry in Soup(rss.__str__()).findAll('ns0:id', { 'ns2:original-id': True }):
+                        print "!!!!"
+                        print entry
+                        #if '2011' in entry['ns2:original-id']:
+                        if url in entry['ns2:original-id']:
+                          #  print entry
+                            #get_entry_url
+                            print entry.contents[0]
+                            get_entry_url_full = get_entry_url % entry.contents[0]
+                            break
+                        #print entry.getChildren()
+                        #href = entry.findAll('link')
+                        #print href
+        except:
+            return NottyResponse("there was an error finding this in reader. admin notified, will fix soon!") 
     
     try:
-        entry = gd_client.Get(get_entry_url, converter=str)
+        entry = gd_client.Get(get_entry_url_full, converter=str)
     except Exception as e:
         if 'Token invalid' in e.args[0]['reason'] or True:
             auth = refresh_token(auth)
