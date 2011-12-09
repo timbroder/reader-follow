@@ -97,6 +97,7 @@ jQuery.noConflict();
 			this.published_on = this.$container.find('.entry-date').text();
 			
 			this.sha = SHA1(this.href);
+			
 			this.$container.addClass('read-' + this.sha);
 			
 			this.$comments_area = this.ui.get_comments_area(this.$container);
@@ -115,6 +116,8 @@ jQuery.noConflict();
 			this.$share_button = this.ui.get_bar_button('Sharing.net');
 			
 			this.$share_button.insertAfter(this.$action_bar.find(".star"));
+			this.$share_spinner = self.ui.get_spinner(self.sha).css({'opacity':'0'});
+			this.$share_spinner.insertAfter(this.$action_bar.find(".star"));
 			this.$share_button.parent().addClass('reader-shareable');
 			
 			this.$share_button.on('click', function(){
@@ -140,9 +143,10 @@ jQuery.noConflict();
 		
 		share: function() {
 			this.ui.show_modal(false);
+			this.$share_spinner.css({'opacity':'100'});
 			var self = this,
 				json = this.get_json_href();
-			delete json.sha;
+
 		
 			/*GM_xmlhttpRequest({
 				url: this.post_url + '?' + $.param(json),// + '?callback=?',
@@ -156,7 +160,6 @@ jQuery.noConflict();
 				onerror: function () {}
 			});*/
 			var url = this.endpoint + 'share/?' + $.param(json);
-			console.log(url);
 			this.loader.addScript(url, this.sha);
 		},
 		

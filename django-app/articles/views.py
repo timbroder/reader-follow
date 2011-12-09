@@ -132,11 +132,16 @@ def post(request):
     else:
         return NottyResponse("shared: %s" % article.title)
 
-def get_entry_data(request, url, auth_key):
+def get_entry_data(request, url, auth_key, sha=None):
     get_id_url = "https://www.google.com/reader/api/0/search/items/ids?q=%s" % url
     get_entry_url = "https://www.google.com/reader/api/0/stream/items/contents?freshness=false&client=reader-follow&i=%s"
     find_feed_url = "https://www.google.com/reader/api/0/feed-finder?q=%s" % url
     get_feed_url = "http://www.google.com/reader/atom/feed/%s?n=200"
+    if sha:
+        spinner_off = " jQuery('.spinner-%s').css({'opacity':'0'});" % sha
+    else:
+        spinner_off = ''
+    
     try:
         article = Article.objects.get(url=url)
         return article
@@ -147,7 +152,7 @@ def get_entry_data(request, url, auth_key):
         profile = UserProfile.objects.get(auth_key=auth_key)
         auth = UserSocialAuth.objects.get(user=profile.user)
     except:
-        return NottyResponse("there seems to be an error with your auth key or account")
+        return NottyResponse("there seems to be an error with your auth key or account", spinner_off)
 
     gd_client = service.ContactsService()
     gd_client.debug = 'true'
@@ -198,7 +203,7 @@ def get_entry_data(request, url, auth_key):
                         #href = entry.findAll('link')
                         #print href
         except:
-            return NottyResponse("there was an error finding this in reader. admin notified, will fix soon!") 
+            return NottyResponse("there was an error finding this in reader. admin notified, will fix soon!", spinner_off) 
     
     try:
         entry = gd_client.Get(get_entry_url_full, converter=str)
@@ -208,7 +213,7 @@ def get_entry_data(request, url, auth_key):
             gd_client.SetAuthSubToken(auth.extra_data['access_token'])
             entry = gd_client.Get(get_entry_url, converter=str)
         else:
-            return NottyResponse("auth problems. admin notified, will fix soon!") 
+            return NottyResponse("auth problems. admin notified, will fix soon!", spinner_off) 
         
             
     json = simplejson.loads(entry.__str__())
@@ -258,10 +263,13 @@ def share(request):
     if is_invalid:
         return HttpResponse("0")
         
+    print "hi"
+    print data
+    spinner_off = " jQuery('.spinner-%s').css({'opacity':'0'});" % data['sha']
     try:
-        article = get_entry_data(request, data['url'], data['auth'])
+        article = get_entry_data(request, data['url'], data['auth'], data['sha'])
     except Article.DoesNotExist:
-        return NottyResponse("not shared yet, fix this")
+        return NottyResponse("not shared yet, fix this", spinner_off)
     
     if isinstance(article, NottyResponse):
         return article
@@ -272,9 +280,9 @@ def share(request):
         return NottyResponse('bad auth key')
 
     if not share_article(article, profile):
-        return NottyResponse("already shared") 
+        return NottyResponse("already shared", spinner_off)
     else:
-        return NottyResponse("shared: %s" % article.title)
+        return NottyResponse("shared: %s" % article.title, spinner_off)
     
     return HttpResponse("1")
 
@@ -366,7 +374,7 @@ def comment(request):
         return HttpResponse("0")
     
     try:
-        article = get_entry_data(request, data['url'], data['auth'])
+        article = get_entry_data(request, data['url'], data['auth'], data['sha'])
     except Article.DoesNotExist:
         return NottyResponse("not shared yet, fix this")
 
