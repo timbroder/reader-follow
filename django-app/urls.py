@@ -23,7 +23,6 @@ urlpatterns = patterns('',
     (r'^get/(?P<article_id>\d+)/$', articles.get),
     url(r'', include('social_auth.urls')),
     url('^', include('follow.urls')),
-    (r'^sentry/', include('sentry.web.urls')),
     (r'^$', articles.home),
 )
 

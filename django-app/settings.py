@@ -98,10 +98,11 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'raven.contrib.django.middleware.SentryResponseErrorIdMiddleware',
     #'django_authopenid.middleware.OpenIDMiddleware',
     'openid_consumer.middleware.OpenIDMiddleware',
     'waffle.middleware.WaffleMiddleware',
-    
+    'raven.contrib.django.middleware.Sentry404CatchMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
 )
 
@@ -151,9 +152,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
             'django.core.context_processors.i18n',
             'django.core.context_processors.media',
             'django.core.context_processors.request',
-            'raven.contrib.django.middleware.SentryResponseErrorIdMiddleware',
             'social_auth.context_processors.social_auth_by_type_backends',
-            'raven.contrib.django.middleware.Sentry404CatchMiddleware',
            # 'django_authopenid.context_processors.authopenid',
         )
 
