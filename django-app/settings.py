@@ -136,7 +136,7 @@ INSTALLED_APPS = (
     'debug_toolbar',
     'sentry',
     'raven.contrib.django',
-    'south',
+    #'south',
 )
 
 CACHES = {
