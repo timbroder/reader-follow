@@ -68,8 +68,7 @@ jQuery.noConflict();
 		}
 	};
 	
-	var Article = function(key, factory, loader, $article) {
-		this.key = key;
+	var Article = function(factory, loader, $article) {
 		this.ui = factory;
 		this.loader = loader;
 		
@@ -193,7 +192,7 @@ jQuery.noConflict();
 					'body': this.body,
 					'published_on': this.published_on,
 					'title': this.$title.text(),
-					'auth': this.key,
+					'auth': GM_getValue("greader_key"),
 					'sha': this.sha
 					//'callback': myFunction
 			};
@@ -205,7 +204,7 @@ jQuery.noConflict();
 			var json = {
 					'url': this.href,
 					'sha': this.sha,
-					'auth': this.key
+					'auth': GM_getValue("greader_key")
 			};
 			
 			return json;
@@ -224,7 +223,6 @@ jQuery.noConflict();
 	
 	var ReaderUI = function(base_url) {
 		this.base_url = base_url;
-		this.key = GM_getValue("greader_key");
 	};
 	
 	ReaderUI.prototype = {
@@ -273,7 +271,6 @@ jQuery.noConflict();
 				if (Modernizr.localstorage) {
 					var key = prompt('Please enter your auth key', GM_getValue("greader_key"));
 					if (key !== null && key !== '') {
-						//this.key = key;
 						GM_setValue("greader_key", key);
 					}
 				} else {
@@ -285,7 +282,6 @@ jQuery.noConflict();
 	
 	var ReaderSharing = function(base_url) {
 		var self = this;
-		this.key = GM_getValue("greader_key");
 		self.base_url = base_url;
 		this.settingsShown = false;
 		this.check_ui_load();
@@ -341,7 +337,7 @@ jQuery.noConflict();
 			var self = this;
 			$('.entry-container:not(.reader-shareable)').each(function () {
 				//self.add_button($(this));
-				var article = new Article(self.key, self.ui, self.loader, $(this));
+				var article = new Article(self.ui, self.loader, $(this));
 				self.articles.push(article);
 			});
 
