@@ -248,14 +248,14 @@ def get_entry_data(request, url, auth_key, sha=None):
     try:
         if debug:
             print "TRYING BODY1"
-        article.body = unicode(escape(item['summary']['content']), "utf-8", errors="replace")
+        article.body = item['summary']['content'].encode("utf-8")
     except Exception as e:
         if debug:
             print e
         try: 
             if debug:
                 print "TRYING BODY2"
-            article.body = escape(item['content']['content']).encode("utf-8")
+            article.body = item['content']['content'].encode("utf-8")
         except Exception as e:
             if debug:
                 print e
