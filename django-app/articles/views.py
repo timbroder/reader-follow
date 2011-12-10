@@ -125,7 +125,8 @@ def post(request):
       
     try:
         profile = UserProfile.objects.get(auth_key=data['auth'])
-    except:
+    except Exception as e:
+        logging.error('bad auth key', exc_info=True, extra={'request': request, 'exception': e})
         return NottyResponse('bad auth key')
 
     if not share_article(article, profile):
@@ -152,22 +153,26 @@ def get_entry_data(request, url, auth_key, sha=None):
     try:
         profile = UserProfile.objects.get(auth_key=auth_key)
         auth = UserSocialAuth.objects.get(user=profile.user)
-    except:
+    except Exception as e:
+        print "LOGGING SOMETHING"
+        logging.error('there seems to be an error with your auth key or account', exc_info=True, extra={'request': request, 'exception': e})
         return NottyResponse("there seems to be an error with your auth key or account", spinner_off)
 
     gd_client = service.ContactsService()
     gd_client.debug = 'true'
     gd_client.SetAuthSubToken(auth.extra_data['access_token'])
 
-    print 'share'
-    print get_id_url
     try:
         search = gd_client.Get(get_id_url)
     except Exception as e:
-        if 'Token invalid' in e.args[0]['reason'] or True:
-            auth = refresh_token(auth)
-            gd_client.SetAuthSubToken(auth.extra_data['access_token'])
-            search = gd_client.Get(get_id_url)
+        try:
+            if 'Token invalid' in e.args[0]['reason'] or True:
+                auth = refresh_token(auth)
+                gd_client.SetAuthSubToken(auth.extra_data['access_token'])
+                search = gd_client.Get(get_id_url)
+        except Exception as ee:
+            logging.error("token refresh - %s" % profile.user.username, exc_info=True, extra={'request': request, 'exception': ee})
+            return NottyResponse("auth problems. admin notified, will fix soon!", spinner_off) 
     
     
     try:
@@ -203,17 +208,20 @@ def get_entry_data(request, url, auth_key, sha=None):
                         #print entry.getChildren()
                         #href = entry.findAll('link')
                         #print href
-        except:
+        except Exception as e:
+            logging.error("article search - %s" % profile.user.username, exc_info=True, extra={'request': request, 'exception': e})
             return NottyResponse("there was an error finding this in reader. admin notified, will fix soon!", spinner_off) 
     
     try:
         entry = gd_client.Get(get_entry_url_full, converter=str)
     except Exception as e:
-        if 'Token invalid' in e.args[0]['reason'] or True:
-            auth = refresh_token(auth)
-            gd_client.SetAuthSubToken(auth.extra_data['access_token'])
-            entry = gd_client.Get(get_entry_url, converter=str)
-        else:
+        try:
+            if 'Token invalid' in e.args[0]['reason'] or True:
+                auth = refresh_token(auth)
+                gd_client.SetAuthSubToken(auth.extra_data['access_token'])
+                search = gd_client.Get(get_id_url)
+        except Exception as ee:
+            logging.error("token refresh - %s" % profile.user.username, exc_info=True, extra={'request': request, 'exception': ee})
             return NottyResponse("auth problems. admin notified, will fix soon!", spinner_off) 
         
             
@@ -267,18 +275,22 @@ def share(request):
     print "hi"
     print data
     spinner_off = " jQuery('.spinner-%s').css({'opacity':'0'});" % data['sha']
-    try:
-        article = get_entry_data(request, data['url'], data['auth'], data['sha'])
-    except Article.DoesNotExist:
-        return NottyResponse("not shared yet, fix this", spinner_off)
-    
-    if isinstance(article, NottyResponse):
-        return article
       
     try:
         profile = UserProfile.objects.get(auth_key=data['auth'])
     except:
-        return NottyResponse('bad auth key')
+        logging.error("bad auth key", exc_info=True, extra={'request': request })
+        return NottyResponse('bad auth key', spinner_off)
+
+    try:
+        article = get_entry_data(request, data['url'], data['auth'], data['sha'])
+    except Article.DoesNotExist as e:
+        logging.error("share article - %s" % profile.user.username, exc_info=True, extra={'request': request, 'exception': e})
+        return NottyResponse("not shared yet, fix this", spinner_off)
+    
+    if isinstance(article, NottyResponse):
+        logging.error("share article - %s" % profile.user.username, exc_info=True, extra={'request': request })
+        return article
 
     if not share_article(article, profile):
         return NottyResponse("already shared", spinner_off)
@@ -374,21 +386,27 @@ def comment(request):
     if is_invalid:
         return HttpResponse("0")
     
+    remove_spinner = " jQuery('.spinner-%s').remove();" % data['sha']
+    
     try:
         article = get_entry_data(request, data['url'], data['auth'], data['sha'])
-    except Article.DoesNotExist:
-        return NottyResponse("not shared yet, fix this")
+    except Article.DoesNotExist as e:
+        logging.error("comment, unshared article", exc_info=True, extra={'request': request, 'exception': e})
+        return NottyResponse("not shared yet, fix this", remove_spinner)
 
     if isinstance(article, NottyResponse):
+        logging.error("comment", exc_info=True, extra={'request': request })
         return article
     
     if not Article:
-        return NottyResponse("there was an error")
+        logging.error("comment, no article", exc_info=True, extra={'request': request })
+        return NottyResponse("there was an error", remove_spinner)
         
     try:
         profile = UserProfile.objects.get(auth_key=data['auth'])
-    except:
-        return NottyResponse('bad auth key')
+    except Exception as e:
+        logging.info("bad auth key", exc_info=True, extra={'request': request, 'exception': e})
+        return NottyResponse('bad auth key', remove_spinner)
     
     share_article(article, profile)
     comment = add_comment(request, article, profile, data['comment'])
@@ -396,7 +414,7 @@ def comment(request):
     #show updated comments
     comments = get_comments(article, data)
     tmpl = loader.get_template('comments.js')
-    rendered = tmpl.render(Context(comments)) + " jQuery('.spinner-%s').remove();" % data['sha']
+    rendered = tmpl.render(Context(comments)) + remove_spinner
     
     commenets_email(request, article, comments['comment_list'], request.user, comment.submit_date)
     
