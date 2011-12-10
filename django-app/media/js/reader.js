@@ -169,7 +169,8 @@ jQuery.noConflict();
 				var $add_button = this.ui.get_add_comment();	
 				$add_button.find('.submit').on('click', function(event){
 					event.preventDefault();
-					$(this).after(self.ui.get_spinner(self.sha));
+					var spinner = self.ui.get_spinner(self.sha);
+					$(this).after(spinner);
 					var json = self.get_json_href();
 					
 					json.comment = $(this).parents('.add_comment').find('textarea').val();

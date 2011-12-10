@@ -342,13 +342,16 @@ def commenets_email(request, article, comments, by, when):
     if waffle.flag_is_active(request, 'commentemail'):
         users = []
         for comment in comments:
-            if comment.user not in users:
+            if comment.user not in users and comment.user != request.user:
                 users.append(comment.user)
         emails = [user.email for user in users]
             
         msg = """
         %s
         %s commented on an article in Google Reader
+        
+        %s
+        
         Continue the conversation: http://readersharing.net/comment/on/%s/
        
         (%s)
@@ -357,7 +360,7 @@ def commenets_email(request, article, comments, by, when):
         subject = "Comment: %s"
         
         send_mail(subject % article.title, 
-                  msg % (article.title, by.username, article.id, when), 
+                  msg % (article.title, by.username, comment.comment, article.id, when), 
                   'follow@readersharing.net',
                   emails, 
                   fail_silently=False)
@@ -439,6 +442,8 @@ def check_email(email):
     return True
 
 def refresh_token(auth):
+    if debug:
+        print "REFRESH TOKEN"
     token = gdata.gauth.OAuth2Token(client_id = getattr(settings, 'GOOGLE_OAUTH2_CLIENT_ID'),
                                      client_secret = getattr(settings, 'GOOGLE_OAUTH2_CLIENT_SECRET'),
                                      scope = ' '.join(getattr(settings, 'GOOGLE_OAUTH_EXTRA_SCOPE', [])),
