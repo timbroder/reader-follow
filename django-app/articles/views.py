@@ -154,7 +154,6 @@ def get_entry_data(request, url, auth_key, sha=None):
         profile = UserProfile.objects.get(auth_key=auth_key)
         auth = UserSocialAuth.objects.get(user=profile.user)
     except Exception as e:
-        print "LOGGING SOMETHING"
         logging.error('there seems to be an error with your auth key or account', exc_info=True, extra={'request': request, 'exception': e})
         return NottyResponse("there seems to be an error with your auth key or account", spinner_off)
 
@@ -176,13 +175,16 @@ def get_entry_data(request, url, auth_key, sha=None):
     
     
     try:
-        print search.__str__
+        if debug:
+            print "TRY SEARCH1 %s" % get_id_url
         soup = Soup(search.__str__())
         
         entry_id = soup.findAll('number')[0].text
         get_entry_url_full = get_entry_url % entry_id
     except:
         try:
+            if debug:
+                print "TRY SEARCH2a %s" % find_feed_url
             find = gd_client.Get(find_feed_url)
             soup = Soup(find.__str__())
             links = soup.findAll('ns0:link')
@@ -190,19 +192,18 @@ def get_entry_data(request, url, auth_key, sha=None):
                 if link['rel'] != 'self':
                     found = False
                     get_feed_url = get_feed_url % link['href']
-                    print get_feed_url
+                    
+                    if debug:
+                        print "TRY SEARCH2b %s" % get_feed_url
+                    
                     rss = gd_client.Get(get_feed_url) 
                     #print get_feed_url % link['href']
-                    print Soup(rss.__str__()).prettify()
                     #print Soup(rss.__str__()).findAll('ns0:entry')
                     for entry in Soup(rss.__str__()).findAll('ns0:id', { 'ns2:original-id': True }):
-                        print "!!!!"
-                        print entry
                         #if '2011' in entry['ns2:original-id']:
                         if url in entry['ns2:original-id']:
                           #  print entry
                             #get_entry_url
-                            print entry.contents[0]
                             get_entry_url_full = get_entry_url % entry.contents[0]
                             break
                         #print entry.getChildren()
@@ -213,6 +214,9 @@ def get_entry_data(request, url, auth_key, sha=None):
             return NottyResponse("there was an error finding this in reader. admin notified, will fix soon!", spinner_off) 
     
     try:
+        if debug:
+            print "GET ARTICLE %s" % get_entry_url_full
+            
         entry = gd_client.Get(get_entry_url_full, converter=str)
     except Exception as e:
         try:
@@ -242,11 +246,21 @@ def get_entry_data(request, url, auth_key, sha=None):
     
     #shitty
     try:
+        if debug:
+            print "TRYING BODY1"
         article.body = unicode(escape(item['summary']['content']), "utf-8", errors="replace")
-    except:
+    except Exception as e:
+        if debug:
+            print e
         try: 
-            article.body = unicode(escape(item['content']['content']), "utf-8", errors="replace")
-        except:
+            if debug:
+                print "TRYING BODY2"
+            article.body = escape(item['content']['content']).encode("utf-8")
+        except Exception as e:
+            if debug:
+                print e
+                print "FAILED BODY"
+            
             pass
         
     try:
@@ -272,8 +286,6 @@ def share(request):
     if is_invalid:
         return HttpResponse("0")
         
-    print "hi"
-    print data
     spinner_off = " jQuery('.spinner-%s').css({'opacity':'0'});" % data['sha']
       
     try:
