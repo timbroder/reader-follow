@@ -196,20 +196,34 @@ def get_entry_data(request, url, auth_key, sha=None):
                     if debug:
                         print "TRY SEARCH2b %s" % get_feed_url
                     
-                    rss = gd_client.Get(get_feed_url) 
+                    
                     #print get_feed_url % link['href']
-                    #print Soup(rss.__str__()).findAll('ns0:entry')
-                    for entry in Soup(rss.__str__()).findAll('ns0:id', { 'ns2:original-id': True }):
-                        #if '2011' in entry['ns2:original-id']:
-                        if url in entry['ns2:original-id']:
-                          #  print entry
-                            #get_entry_url
-                            get_entry_url_full = get_entry_url % entry.contents[0]
+                    #print rss.__str__()
+                    continuation = ''
+                    found = False
+                    for i in range (1,10):
+                        if found:
                             break
-                        #print entry.getChildren()
-                        #href = entry.findAll('link')
-                        #print href
+                        rss = gd_client.Get("%s%s" % (get_feed_url,  continuation))
+                        entries = Soup(rss.__str__())
+                        try:
+                            continuation =  "&c=%s" % entries.findAll('ns2:continuation')[0].contents[0]
+                        except:
+                            continuation = ''
+                            break
+
+                        for entry in entries.findAll('ns0:id', { 'ns2:original-id': True }):
+                            if url in entry['ns2:original-id']:
+                                found = True
+                                get_entry_url_full = get_entry_url % entry.contents[0]
+                                break
+                    else:
+                        if not found:
+                            logging.error("article search - %s" % profile.user.username, exc_info=True, extra={'request': request })
+                            return NottyResponse("there was an error finding this in reader. admin notified, will fix soon!", spinner_off)
         except Exception as e:
+            if debug:
+                print 'Error on search'
             logging.error("article search - %s" % profile.user.username, exc_info=True, extra={'request': request, 'exception': e})
             return NottyResponse("there was an error finding this in reader. admin notified, will fix soon!", spinner_off) 
     
@@ -481,7 +495,7 @@ def get_contacts(user):
     client.debug = 'true'
     
     client.SetAuthSubToken(auth.extra_data['access_token'])
-    #uri = "%s?updated-min=2007-03-16T00:00:00&max-results=500&orderby=lastmodified&sortorder=descending" % gd_client.GetFeedUri()
+    uri = "%s?updated-min=2007-03-16T00:00:00&max-results=500&orderby=lastmodified&sortorder=descending" % client.GetFeedUri()
     contacts = []
     entries = []
     #uri = "%s?updated-min=2007-03-16T00:00:00&max-results=500&q=gmail.com" % gd_client.GetFeedUri()
