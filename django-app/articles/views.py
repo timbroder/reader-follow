@@ -14,6 +14,7 @@ from models import *
 from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from social_auth.models import UserSocialAuth
 from gdata.contacts import service, client
+from gdata.docs import data
 import gdata
 from follow import utils
 from follow.models import Follow
@@ -558,6 +559,8 @@ def home(request):
 
 #make current user follow
 def follow(request, email):
+    quickadd_url = "http://www.google.com/reader/api/0/subscription/edit?ck=%s&client=ReaderSharing.net&source=SUBSCRIBE_BUTTON" % time.time()
+    print quickadd_url
     user = request.user
     
     following, created = User.objects.get_or_create(email=email)
@@ -566,6 +569,37 @@ def follow(request, email):
         following.save()
     
     utils.follow(user, following)
+    
+    #subscribe user to feed
+    auth = UserSocialAuth.objects.get(user=request.user)
+    #gd_client = gdata.client.GDClient()
+    gd_client = service.ContactsService()
+    gd_client.debug = 'true'
+    gd_client.SetAuthSubToken(auth.extra_data['access_token'])
+    #new_entry = data.Resource()
+    data = urllib.urlencode({
+                             's': 'feed/http://readersharing.net/shared/timothy.broder@gmail.com/', 
+                             'T': auth.extra_data['access_token'], 
+                             'ac': 'subscribe',
+                             'a': "user/-/label/sharetest", 
+                             't': 'test' })
+    print data
+    #try:
+    #quickadd = gd_client.post(entry=new_entry, uri=quickadd_url, t=auth.extra_data['access_token'], quickadd="feed/http://readersharing.net/shared/timothy.broder@gmail.com/")
+    quickadd = gd_client.Post(uri=quickadd_url, data=data)
+    #except Exception as e:
+    #    print e.args
+    #    try:
+    #        if 'Token invalid' in e.args[0]['reason'] or True:
+    #            auth = refresh_token(auth)
+    #            gd_client.SetAuthSubToken(auth.extra_data['access_token'])
+    #            quickadd = gd_client.post(entry=new_entry, uri=quickadd_url, t=auth.extra_data['access_token'], quickadd="feed/http://readersharing.net/shared/timothy.broder@gmail.com/")
+    #    except Exception as ee:
+    #        print ee.args
+    #        logging.error("token refresh - %s" % request.user.username, exc_info=True, extra={'request': request, 'exception': ee})
+    #        print "auth problems. admin notified, will fix soon!" 
+    print 'back'
+    print quickadd
     
     if waffle.flag_is_active(request, 'followemail'):
         msg = """
