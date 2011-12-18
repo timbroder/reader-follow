@@ -33,6 +33,7 @@ import urllib, urllib2
 from django.core.context_processors import csrf
 from django.utils.html import escape
 import logging
+from django.contrib import messages
 
 debug = getattr(settings, 'DEBUG', None)
 
@@ -502,7 +503,7 @@ def get_contacts(user):
     #uri = "%s?updated-min=2007-03-16T00:00:00&max-results=500&q=gmail.com" % gd_client.GetFeedUri()
 
     try:
-        feed = client.GetContactsFeed()
+        feed = client.GetContactsFeed(uri)
     except Exception as e:
         if 'Token invalid' in e.args[0]['reason'] or True:
             auth = refresh_token(auth)
@@ -552,7 +553,9 @@ def contacts(request):
         return r2r('index.html', { 'contacts': contacts,
                                    'signed_up_emails': signed_up_emails,
                                    'following_emails': following_emails,
-                                   'user': user })
+                                   'user': user,
+                                   #'messages': messages
+                                }, context_instance=RequestContext(request))
     
 def home(request):
     #logging.info('test', exc_info=True, extra={'request': request,})
@@ -603,7 +606,14 @@ def reader_subscribe(request, email):
         print e.code
         print e.hdrs
         print e.read()
-    print response.read()
+    resp_str = "%s" % response.read()
+    json = simplejson.loads(resp_str)
+    if json['numResults'] == 0 or json['numResults'] == '0':
+        messages.success(request, "Reader has not been able to crawl %s's feed, please try again later." % email)
+    else:
+        messages.success(request, "Successfully added %s's shared feed to reader" % email)
+    
+    return None
 
 #make current user follow
 @login_required(login_url='/login/google-oauth2/')
