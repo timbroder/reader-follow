@@ -168,7 +168,7 @@ def get_entry_data(request, url, auth_key, sha=None):
     except Exception as e:
         try:
             if True: #'Token invalid' in e.args[0]['reason'] or True:
-                logging.error("refreshing token - %s" % profile.user.username, exc_info=True, extra={'request': request, 'exception': e })
+                logging.info("refreshing token - %s" % profile.user.username, exc_info=True, extra={'request': request, 'exception': e })
                 auth = refresh_token(auth)
                 gd_client.SetAuthSubToken(auth.extra_data['access_token'])
                 search = gd_client.Get(get_id_url)
@@ -238,7 +238,7 @@ def get_entry_data(request, url, auth_key, sha=None):
     except Exception as e:
         try:
             if True: #'Token invalid' in e.args[0]['reason'] or True:
-                logging.error("refreshing token - %s" % profile.user.username, exc_info=True, extra={'request': request, 'exception': e })
+                logging.info("refreshing token - %s" % profile.user.username, exc_info=True, extra={'request': request, 'exception': e })
                 auth = refresh_token(auth)
                 gd_client.SetAuthSubToken(auth.extra_data['access_token'])
                 search = gd_client.Get(get_id_url)
