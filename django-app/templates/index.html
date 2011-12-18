@@ -7,6 +7,7 @@
 <div>
 	<p>Aggregate feed of everyone you follow: <a href="https://www.google.com/reader/view/feed/http://readersharing.net/feed/{{ user.email }}/{{ user.get_profile.auth_key }}/">Show in Reader</a></p>
 	<p>Auth Key for {{ user.username}}: {{ user.get_profile.auth_key }}</p>
+	<p>Removed or missed a feed in reader? <a href="/follow/all/">Re-Add all of the people you are following</a></p>
 </div>
 <div style="width: 700px">
 	<table id="contacts">

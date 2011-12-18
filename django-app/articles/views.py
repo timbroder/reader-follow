@@ -558,24 +558,8 @@ def home(request):
     #logging.info('test', exc_info=True, extra={'request': request,})
     return contacts(request)
 
-#make current user follow
-@login_required(login_url='/login/google-oauth2/')
-def follow(request, email):
-    
-    
-    user = request.user
-    
-    following, created = User.objects.get_or_create(email=email)
-    if created:
-        following.username = email
-        following.save()
-    
-    utils.follow(user, following)
-    
-    
-
-    
-    #quickadd_url = "https://www.google.com/reader/api/0/subscription/edit?ck=%s&client=scroll" % time.time()
+def reader_subscribe(request, email):
+#quickadd_url = "https://www.google.com/reader/api/0/subscription/edit?ck=%s&client=scroll" % time.time()
     quickadd_url = "http://www.google.com/reader/api/0/subscription/quickadd?client=sscroll"
     auth = UserSocialAuth.objects.get(user=request.user)
     T = auth.extra_data['access_token']
@@ -619,6 +603,31 @@ def follow(request, email):
         print e.code
         print e.hdrs
         print e.read()
+    print response.read()
+
+#make current user follow
+@login_required(login_url='/login/google-oauth2/')
+def follow(request, email):
+    
+    
+    user = request.user
+    
+    following, created = User.objects.get_or_create(email=email)
+    if created:
+        following.username = email
+        following.save()
+    
+    utils.follow(user, following)
+    
+    
+    subscribed = reader_subscribe(request, email)
+    if isinstance(subscribed, HttpResponse):
+        return subscribed
+    else:
+        #notify
+        pass
+    
+    
     
     if waffle.flag_is_active(request, 'followemail'):
         msg = """
@@ -654,4 +663,15 @@ def unfollow(request, email):
         pass
         
     return redirect('/')
+
+
+@login_required(login_url='/login/google-oauth2/')
+def followall(request):
+    following = Follow.objects.filter(user = request.user)
+    for usr in following:
+        email = usr.target.email
+        reader_subscribe(request, email)
+    
+    return redirect('/')
+    
     
