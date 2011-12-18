@@ -29,7 +29,7 @@ from django.utils.http import urlquote
 from django.core.cache import cache
 from BeautifulSoup import BeautifulSoup as Soup
 from urllib2 import Request, urlopen
-import urllib
+import urllib, urllib2
 from django.core.context_processors import csrf
 from django.utils.html import escape
 import logging
@@ -533,6 +533,7 @@ def contacts(request):
     if not user.is_authenticated():
         return r2r('login.html', {})
     else:
+        request.session.set_expiry(1680)
         if request.session.get('google_contacts_cached'):
             contacts = request.session.get('google_contacts_cached')
         else:
@@ -558,9 +559,10 @@ def home(request):
     return contacts(request)
 
 #make current user follow
+@login_required(login_url='/login/google-oauth2/')
 def follow(request, email):
-    quickadd_url = "http://www.google.com/reader/api/0/subscription/edit?ck=%s&client=ReaderSharing.net&source=SUBSCRIBE_BUTTON" % time.time()
-    print quickadd_url
+    
+    
     user = request.user
     
     following, created = User.objects.get_or_create(email=email)
@@ -570,36 +572,53 @@ def follow(request, email):
     
     utils.follow(user, following)
     
-    #subscribe user to feed
+    
+
+    
+    #quickadd_url = "https://www.google.com/reader/api/0/subscription/edit?ck=%s&client=scroll" % time.time()
+    quickadd_url = "http://www.google.com/reader/api/0/subscription/quickadd?client=sscroll"
     auth = UserSocialAuth.objects.get(user=request.user)
-    #gd_client = gdata.client.GDClient()
-    gd_client = service.ContactsService()
-    gd_client.debug = 'true'
-    gd_client.SetAuthSubToken(auth.extra_data['access_token'])
-    #new_entry = data.Resource()
+    T = auth.extra_data['access_token']
+    #T = "//0Jp3Tb13-1PQa0QqkRprMA"
+    
+    token_url = "https://www.google.com/reader/api/0/token?ck=%s&client=sscroll" % time.time()
+    req = urllib2.Request(token_url)
+    req.add_header('Authorization', 'Bearer %s' % T)
+    
+    try:
+        response = urllib2.urlopen(req)
+    except Exception as e:
+        print 'dead on token'
+        print e.code
+        print e.hdrs
+        print e.read()
+    
+    the_page = response.read()
+    action_token = "%s" % the_page
+    
     data = urllib.urlencode({
-                             's': 'feed/http://readersharing.net/shared/timothy.broder@gmail.com/', 
-                             'T': auth.extra_data['access_token'], 
-                             'ac': 'subscribe',
-                             'a': "user/-/label/sharetest", 
-                             't': 'test' })
-    print data
-    #try:
-    #quickadd = gd_client.post(entry=new_entry, uri=quickadd_url, t=auth.extra_data['access_token'], quickadd="feed/http://readersharing.net/shared/timothy.broder@gmail.com/")
-    quickadd = gd_client.Post(uri=quickadd_url, data=data)
-    #except Exception as e:
-    #    print e.args
-    #    try:
-    #        if 'Token invalid' in e.args[0]['reason'] or True:
-    #            auth = refresh_token(auth)
-    #            gd_client.SetAuthSubToken(auth.extra_data['access_token'])
-    #            quickadd = gd_client.post(entry=new_entry, uri=quickadd_url, t=auth.extra_data['access_token'], quickadd="feed/http://readersharing.net/shared/timothy.broder@gmail.com/")
-    #    except Exception as ee:
-    #        print ee.args
-    #        logging.error("token refresh - %s" % request.user.username, exc_info=True, extra={'request': request, 'exception': ee})
-    #        print "auth problems. admin notified, will fix soon!" 
-    print 'back'
-    print quickadd
+                            #'s': 'feed/http://readersharing.net/shared/timothy.broder@gmail.com/', 
+                            # 'token': T,  
+                            # 'T': T,  
+                             #'ac': 'subscribe',
+                             #'a': "user/-/label/sharetest", 
+                             #'t': 'test'
+                             
+                             'quickadd':  "http://readersharing.net/shared/%s/" % email, 
+                             'T': action_token, 
+                             #'ac': 'subscribe',
+    
+                            })
+    req = urllib2.Request(quickadd_url, data)
+    req.add_header('Authorization', 'Bearer %s' % T)
+    
+    try:
+        response = urllib2.urlopen(req)
+    except Exception as e:
+        print "BAD BAD add"
+        print e.code
+        print e.hdrs
+        print e.read()
     
     if waffle.flag_is_active(request, 'followemail'):
         msg = """
@@ -620,6 +639,7 @@ def follow(request, email):
         
     return redirect('/')
 
+@login_required(login_url='/login/google-oauth2/')
 def unfollow(request, email):
     user = request.user
     
