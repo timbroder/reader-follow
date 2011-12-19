@@ -34,6 +34,7 @@ from django.core.context_processors import csrf
 from django.utils.html import escape
 import logging
 from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
 
 debug = getattr(settings, 'DEBUG', None)
 
@@ -128,6 +129,7 @@ def post(request):
     try:
         profile = UserProfile.objects.get(auth_key=data['auth'])
     except Exception as e:
+        logout(request)
         logging.error('bad auth key', exc_info=True, extra={'request': request, 'exception': e})
         return NottyResponse('bad auth key')
 
@@ -309,8 +311,9 @@ def share(request):
     try:
         profile = UserProfile.objects.get(auth_key=data['auth'])
     except:
+        logout(request)
         logging.error("bad auth key", exc_info=True, extra={'request': request })
-        return NottyResponse('bad auth key', spinner_off)
+        return NottyResponse('bad auth key, please check readersharing.net', spinner_off)
 
     try:
         article = get_entry_data(request, data['url'], data['auth'], data['sha'])
@@ -439,7 +442,7 @@ def comment(request):
         profile = UserProfile.objects.get(auth_key=data['auth'])
     except Exception as e:
         logging.info("bad auth key", exc_info=True, extra={'request': request, 'exception': e})
-        return NottyResponse('bad auth key', remove_spinner)
+        return NottyResponse('bad auth key, please check readersharing.net', remove_spinner)
     
     share_article(article, profile)
     comment = add_comment(request, article, profile, data['comment'])
@@ -536,7 +539,6 @@ def contacts(request):
     if not user.is_authenticated():
         return r2r('login.html', {})
     else:
-        request.session.set_expiry(1680)
         if request.session.get('google_contacts_cached'):
             contacts = request.session.get('google_contacts_cached')
         else:
@@ -562,6 +564,11 @@ def contacts(request):
 def home(request):
     #logging.info('test', exc_info=True, extra={'request': request,})
     return contacts(request)
+
+def session_expires(request):
+    print "EXPIRE"
+    request.session.set_expiry(900)
+    return redirect('/')
 
 def reader_subscribe(request, email):
 #quickadd_url = "https://www.google.com/reader/api/0/subscription/edit?ck=%s&client=scroll" % time.time()

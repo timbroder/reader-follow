@@ -182,7 +182,7 @@ DEBUG_TOOLBAR_PANELS = (
     'debug_toolbar.panels.logger.LoggingPanel',
 )
 
-LOGIN_REDIRECT_URL = '/'
+LOGIN_REDIRECT_URL = '/accounts/expire'
 LOGOUT_REDIRECT_URL = '/'
 AUTH_PROFILE_MODULE = 'articles.UserProfile'
 

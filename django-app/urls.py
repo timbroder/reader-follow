@@ -11,6 +11,7 @@ urlpatterns = patterns('',
     (r'^comments/', include('django.contrib.comments.urls')),
     
     (r'^follow/all/$', articles.followall),
+    (r'^accounts/expire/$', articles.session_expires),
     (r'^follow/(?P<email>.+)/$', articles.follow),
     (r'^unfollow/(?P<email>.+)/$', articles.unfollow),
     (r'^shared/(?P<email>.+)/$', feeds.UsersSharedFeed()),
