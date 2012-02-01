@@ -5,34 +5,34 @@
 
 jQuery.noConflict();
 (function($) { 
-	
-	/*!
-	 * jQuery Notty
-	 * http://www.userdot.net/#!/jquery
-	 *
-	 * Copyright 2011, UserDot www.userdot.net
-	 * Licensed under the GPL Version 3 license.
-	 * Version 1.0.0
-	 *
-	 */
-	(function(a){a.notty=function(b){function l(a){var b=[[2,"One second","1 second from now"],[60,"seconds",1],[120,"One minute","1 minute from now"],[3600,"minutes",60],[7200,"One hour","1 hour from now"],[86400,"hours",3600],[172800,"One day","tomorrow"],[604800,"days",86400],[1209600,"One week","next week"],[2419200,"weeks",604800],[4838400,"One month","next month"],[29030400,"months",2419200],[58060800,"One year","next year"],[290304e4,"years",29030400],[580608e4,"One century","next century"],[580608e5,"centuries",290304e4]],c=(new Date-a)/1e3,d="ago",e=1;c<0&&(c=Math.abs(c),d="from now",e=1);var f=0,g;while(g=b[f++])if(c<g[0])return typeof g[2]=="string"?g[e]:Math.floor(c/g[2])+" "+g[1];return a}var c,d,e,f,g,h,i;b=a.extend({title:undefined,content:undefined,timeout:0,img:undefined,showTime:!0,click:undefined},b),c=a("#nottys"),c.length||(c=a("<div>",{id:"nottys"}).appendTo(document.body)),d=a("<div>"),d.addClass("notty pop"),e=a("<div>",{click:function(){a(this).parent().removeClass("pop").addClass("remove").delay(300).queue(function(){a(this).clearQueue(),a(this).remove()})}}),e.addClass("hide"),e.html("Hide notification");if(b.img!=undefined){f=a("<div>",{style:"background: url('"+b.img+"')"}),f.addClass("img"),h=a("<div class='left'>"),g=a("<div class='right'>");if(b.title!=undefined)var j="<h2>"+b.title+"</h2>";else var j="";if(b.content!=undefined)var k=b.content;else var k="";i=a("<div>",{html:j+k}),i.addClass("inner"),i.appendTo(g),f.appendTo(h),h.appendTo(d),g.appendTo(d)}else{if(b.title!=undefined)var j="<h2>"+b.title+"</h2>";else var j="";if(b.content!=undefined)var k=b.content;else var k="";i=j+k,d.html(i)}e.appendTo(d);if(b.showTime!=!1){var m=Number(new Date);timeHTML=a("<div>",{html:"<strong>"+l(m)+"</strong> ago"}),timeHTML.addClass("time").attr("title",m),b.img!=undefined?timeHTML.appendTo(g):timeHTML.appendTo(d),setInterval(function(){a(".time").each(function(){var b=a(this).attr("title");a(this).html("<strong>"+l(b)+"</strong> ago")})},4e3)}d.hover(function(){e.show()},function(){e.hide()}),d.prependTo(c),d.show(),b.timeout&&setTimeout(function(){d.removeClass("pop").addClass("remove").delay(300).queue(function(){a(this).clearQueue(),a(this).remove()})},b.timeout),b.click!=undefined&&(d.addClass("click"),d.click(function(c){var d=a(c.target);d.is(".hide")||b.click.call(this)}));return this}})(jQuery)
-	
-	/* Modernizr 2.0.6 (Custom Build) | MIT & BSD
- 	* Build: http://www.modernizr.com/download/#-localstorage-addtest
- 	*/
-	;window.Modernizr=function(a,b,c){function w(a,b){return!!~(""+a).indexOf(b)}function v(a,b){return typeof a===b}function u(a,b){return t(prefixes.join(a+";")+(b||""))}function t(a){j.cssText=a}var d="2.0.6",e={},f=b.documentElement,g=b.head||b.getElementsByTagName("head")[0],h="modernizr",i=b.createElement(h),j=i.style,k,l=Object.prototype.toString,m={},n={},o={},p=[],q,r={}.hasOwnProperty,s;!v(r,c)&&!v(r.call,c)?s=function(a,b){return r.call(a,b)}:s=function(a,b){return b in a&&v(a.constructor.prototype[b],c)},m.localstorage=function(){try{return!!localStorage.getItem}catch(a){return!1}};for(var x in m)s(m,x)&&(q=x.toLowerCase(),e[q]=m[x](),p.push((e[q]?"":"no-")+q));e.addTest=function(a,b){if(typeof a=="object")for(var d in a)s(a,d)&&e.addTest(d,a[d]);else{a=a.toLowerCase();if(e[a]!==c)return;b=typeof b=="boolean"?b:!!b(),f.className+=" "+(b?"":"no-")+a,e[a]=b}return e},t(""),i=k=null,e._version=d;return e}(this,this.document);
-	
-	//sha1
-	function SHA1(a){function e(a){a=a.replace(/\r\n/g,"\n");var b="";for(var c=0;c<a.length;c++){var d=a.charCodeAt(c);d<128?b+=String.fromCharCode(d):d>127&&d<2048?(b+=String.fromCharCode(d>>6|192),b+=String.fromCharCode(d&63|128)):(b+=String.fromCharCode(d>>12|224),b+=String.fromCharCode(d>>6&63|128),b+=String.fromCharCode(d&63|128))}return b}function d(a){var b="",c,d;for(c=7;c>=0;c--)d=a>>>c*4&15,b+=d.toString(16);return b}function c(a){var b="",c,d,e;for(c=0;c<=6;c+=2)d=a>>>c*4+4&15,e=a>>>c*4&15,b+=d.toString(16)+e.toString(16);return b}function b(a,b){var c=a<<b|a>>>32-b;return c}var f,g,h,i=Array(80),j=1732584193,k=4023233417,l=2562383102,m=271733878,n=3285377520,o,p,q,r,s,t;a=e(a);var u=a.length,v=[];for(g=0;g<u-3;g+=4)h=a.charCodeAt(g)<<24|a.charCodeAt(g+1)<<16|a.charCodeAt(g+2)<<8|a.charCodeAt(g+3),v.push(h);switch(u%4){case 0:g=2147483648;break;case 1:g=a.charCodeAt(u-1)<<24|8388608;break;case 2:g=a.charCodeAt(u-2)<<24|a.charCodeAt(u-1)<<16|32768;break;case 3:g=a.charCodeAt(u-3)<<24|a.charCodeAt(u-2)<<16|a.charCodeAt(u-1)<<8|128}v.push(g);while(v.length%16!=14)v.push(0);v.push(u>>>29),v.push(u<<3&4294967295);for(f=0;f<v.length;f+=16){for(g=0;g<16;g++)i[g]=v[f+g];for(g=16;g<=79;g++)i[g]=b(i[g-3]^i[g-8]^i[g-14]^i[g-16],1);o=j,p=k,q=l,r=m,s=n;for(g=0;g<=19;g++)t=b(o,5)+(p&q|~p&r)+s+i[g]+1518500249&4294967295,s=r,r=q,q=b(p,30),p=o,o=t;for(g=20;g<=39;g++)t=b(o,5)+(p^q^r)+s+i[g]+1859775393&4294967295,s=r,r=q,q=b(p,30),p=o,o=t;for(g=40;g<=59;g++)t=b(o,5)+(p&q|p&r|q&r)+s+i[g]+2400959708&4294967295,s=r,r=q,q=b(p,30),p=o,o=t;for(g=60;g<=79;g++)t=b(o,5)+(p^q^r)+s+i[g]+3395469782&4294967295,s=r,r=q,q=b(p,30),p=o,o=t;j=j+o&4294967295,k=k+p&4294967295,l=l+q&4294967295,m=m+r&4294967295,n=n+s&4294967295}var t=d(j)+d(k)+d(l)+d(m)+d(n);return t.toLowerCase()}
-	
-	// Array Remove - By John Resig (MIT Licensed)
-	Array.prototype.remove = function(from, to) {
-	  var rest = this.slice((to || from) + 1 || this.length);
-	  this.length = from < 0 ? this.length + from : from;
-	  return this.push.apply(this, rest);
-	};
-	
-	//port GM functions, this needs to be renammed TODO
+    
+    /*!
+     * jQuery Notty
+     * http://www.userdot.net/#!/jquery
+     *
+     * Copyright 2011, UserDot www.userdot.net
+     * Licensed under the GPL Version 3 license.
+     * Version 1.0.0
+     *
+     */
+    (function(a){a.notty=function(b){function l(a){var b=[[2,"One second","1 second from now"],[60,"seconds",1],[120,"One minute","1 minute from now"],[3600,"minutes",60],[7200,"One hour","1 hour from now"],[86400,"hours",3600],[172800,"One day","tomorrow"],[604800,"days",86400],[1209600,"One week","next week"],[2419200,"weeks",604800],[4838400,"One month","next month"],[29030400,"months",2419200],[58060800,"One year","next year"],[290304e4,"years",29030400],[580608e4,"One century","next century"],[580608e5,"centuries",290304e4]],c=(new Date-a)/1e3,d="ago",e=1;c<0&&(c=Math.abs(c),d="from now",e=1);var f=0,g;while(g=b[f++])if(c<g[0])return typeof g[2]=="string"?g[e]:Math.floor(c/g[2])+" "+g[1];return a}var c,d,e,f,g,h,i;b=a.extend({title:undefined,content:undefined,timeout:0,img:undefined,showTime:!0,click:undefined},b),c=a("#nottys"),c.length||(c=a("<div>",{id:"nottys"}).appendTo(document.body)),d=a("<div>"),d.addClass("notty pop"),e=a("<div>",{click:function(){a(this).parent().removeClass("pop").addClass("remove").delay(300).queue(function(){a(this).clearQueue(),a(this).remove()})}}),e.addClass("hide"),e.html("Hide notification");if(b.img!=undefined){f=a("<div>",{style:"background: url('"+b.img+"')"}),f.addClass("img"),h=a("<div class='left'>"),g=a("<div class='right'>");if(b.title!=undefined)var j="<h2>"+b.title+"</h2>";else var j="";if(b.content!=undefined)var k=b.content;else var k="";i=a("<div>",{html:j+k}),i.addClass("inner"),i.appendTo(g),f.appendTo(h),h.appendTo(d),g.appendTo(d)}else{if(b.title!=undefined)var j="<h2>"+b.title+"</h2>";else var j="";if(b.content!=undefined)var k=b.content;else var k="";i=j+k,d.html(i)}e.appendTo(d);if(b.showTime!=!1){var m=Number(new Date);timeHTML=a("<div>",{html:"<strong>"+l(m)+"</strong> ago"}),timeHTML.addClass("time").attr("title",m),b.img!=undefined?timeHTML.appendTo(g):timeHTML.appendTo(d),setInterval(function(){a(".time").each(function(){var b=a(this).attr("title");a(this).html("<strong>"+l(b)+"</strong> ago")})},4e3)}d.hover(function(){e.show()},function(){e.hide()}),d.prependTo(c),d.show(),b.timeout&&setTimeout(function(){d.removeClass("pop").addClass("remove").delay(300).queue(function(){a(this).clearQueue(),a(this).remove()})},b.timeout),b.click!=undefined&&(d.addClass("click"),d.click(function(c){var d=a(c.target);d.is(".hide")||b.click.call(this)}));return this}})(jQuery)
+    
+    /* Modernizr 2.0.6 (Custom Build) | MIT & BSD
+     * Build: http://www.modernizr.com/download/#-localstorage-addtest
+     */
+    ;window.Modernizr=function(a,b,c){function w(a,b){return!!~(""+a).indexOf(b)}function v(a,b){return typeof a===b}function u(a,b){return t(prefixes.join(a+";")+(b||""))}function t(a){j.cssText=a}var d="2.0.6",e={},f=b.documentElement,g=b.head||b.getElementsByTagName("head")[0],h="modernizr",i=b.createElement(h),j=i.style,k,l=Object.prototype.toString,m={},n={},o={},p=[],q,r={}.hasOwnProperty,s;!v(r,c)&&!v(r.call,c)?s=function(a,b){return r.call(a,b)}:s=function(a,b){return b in a&&v(a.constructor.prototype[b],c)},m.localstorage=function(){try{return!!localStorage.getItem}catch(a){return!1}};for(var x in m)s(m,x)&&(q=x.toLowerCase(),e[q]=m[x](),p.push((e[q]?"":"no-")+q));e.addTest=function(a,b){if(typeof a=="object")for(var d in a)s(a,d)&&e.addTest(d,a[d]);else{a=a.toLowerCase();if(e[a]!==c)return;b=typeof b=="boolean"?b:!!b(),f.className+=" "+(b?"":"no-")+a,e[a]=b}return e},t(""),i=k=null,e._version=d;return e}(this,this.document);
+    
+    //sha1
+    function SHA1(a){function e(a){a=a.replace(/\r\n/g,"\n");var b="";for(var c=0;c<a.length;c++){var d=a.charCodeAt(c);d<128?b+=String.fromCharCode(d):d>127&&d<2048?(b+=String.fromCharCode(d>>6|192),b+=String.fromCharCode(d&63|128)):(b+=String.fromCharCode(d>>12|224),b+=String.fromCharCode(d>>6&63|128),b+=String.fromCharCode(d&63|128))}return b}function d(a){var b="",c,d;for(c=7;c>=0;c--)d=a>>>c*4&15,b+=d.toString(16);return b}function c(a){var b="",c,d,e;for(c=0;c<=6;c+=2)d=a>>>c*4+4&15,e=a>>>c*4&15,b+=d.toString(16)+e.toString(16);return b}function b(a,b){var c=a<<b|a>>>32-b;return c}var f,g,h,i=Array(80),j=1732584193,k=4023233417,l=2562383102,m=271733878,n=3285377520,o,p,q,r,s,t;a=e(a);var u=a.length,v=[];for(g=0;g<u-3;g+=4)h=a.charCodeAt(g)<<24|a.charCodeAt(g+1)<<16|a.charCodeAt(g+2)<<8|a.charCodeAt(g+3),v.push(h);switch(u%4){case 0:g=2147483648;break;case 1:g=a.charCodeAt(u-1)<<24|8388608;break;case 2:g=a.charCodeAt(u-2)<<24|a.charCodeAt(u-1)<<16|32768;break;case 3:g=a.charCodeAt(u-3)<<24|a.charCodeAt(u-2)<<16|a.charCodeAt(u-1)<<8|128}v.push(g);while(v.length%16!=14)v.push(0);v.push(u>>>29),v.push(u<<3&4294967295);for(f=0;f<v.length;f+=16){for(g=0;g<16;g++)i[g]=v[f+g];for(g=16;g<=79;g++)i[g]=b(i[g-3]^i[g-8]^i[g-14]^i[g-16],1);o=j,p=k,q=l,r=m,s=n;for(g=0;g<=19;g++)t=b(o,5)+(p&q|~p&r)+s+i[g]+1518500249&4294967295,s=r,r=q,q=b(p,30),p=o,o=t;for(g=20;g<=39;g++)t=b(o,5)+(p^q^r)+s+i[g]+1859775393&4294967295,s=r,r=q,q=b(p,30),p=o,o=t;for(g=40;g<=59;g++)t=b(o,5)+(p&q|p&r|q&r)+s+i[g]+2400959708&4294967295,s=r,r=q,q=b(p,30),p=o,o=t;for(g=60;g<=79;g++)t=b(o,5)+(p^q^r)+s+i[g]+3395469782&4294967295,s=r,r=q,q=b(p,30),p=o,o=t;j=j+o&4294967295,k=k+p&4294967295,l=l+q&4294967295,m=m+r&4294967295,n=n+s&4294967295}var t=d(j)+d(k)+d(l)+d(m)+d(n);return t.toLowerCase()}
+    
+    // Array Remove - By John Resig (MIT Licensed)
+    Array.prototype.remove = function(from, to) {
+      var rest = this.slice((to || from) + 1 || this.length);
+      this.length = from < 0 ? this.length + from : from;
+      return this.push.apply(this, rest);
+    };
+    
+    //port GM functions, this needs to be renammed TODO
     GM_getValue = function (key,def) {
         return localStorage[key] || def;
     };
@@ -45,328 +45,328 @@ jQuery.noConflict();
     GM_deleteValue = function (key) {
         return delete localStorage[key];
     };
-	
-	var Loader = function() {
-		if(typeof unsafeWindow !== 'undefined') {
-			this.body = unsafeWindow.document.body;
-		} else {
-			this.body = document.body;
-		}
-	};
-	
-	Loader.prototype = {
-		addScript: function(url, clazz) {
-			var script = document.createElement('script');
-			script.type = 'text/javascript';
-			script.src = url;
-			
-			if (clazz !== null ) {
-				script.className = 'script-' + clazz;
-			}
-			
-			this.body.appendChild(script);
-		}
-	};
-	
-	var Article = function(factory, loader, $article) {
-		this.ui = factory;
-		this.loader = loader;
-		
-		this.init($article);
-	};
-	
-	Article.prototype = {
-		init: function($article) {
-			var self = this;
-			this.endpoint = 'http://readersharing.net/';
-			this.$container = $article;
-			this.$container.addClass('reader-shareable');
-			
-			//expanded view
-			this.$action_bar = this.$container.parents('.entry').find('.card-actions');
-			
-			//list view
-			if (this.$action_bar.size() < 1) {
-				this.$action_bar = this.$container.parents('.entry').find('.entry-actions');
-			}
-			
-			this.$title = this.$container.find('.entry-title a');
-			this.href = this.$title.attr('href');
-			this.body = this.$container.find('.entry-body').html();
-			this.published_on = this.$container.find('.entry-date').text();
-			
-			this.sha = SHA1(this.href);
-			
-			this.$container.addClass('read-' + this.sha);
-			
-			this.$comments_area = this.ui.get_comments_area(this.$container);
-			
-			this.display_comments();
-			this.init_share_button();
-			this.init_comment_button();
-			
-			//this.ui.show_modal(false);
-			
-			this.$container.parents('.card-common').addClass(this.sha);
-		},
-		
-		init_share_button: function() {
-			var self = this;
-			this.$share_button = this.ui.get_bar_button('ReaderSharing.net');
-			
-			this.$share_button.insertAfter(this.$action_bar.find(".star"));
-			this.$share_spinner = self.ui.get_spinner(self.sha).css({'opacity':'0'});
-			this.$share_spinner.insertAfter(this.$action_bar.find(".star"));
-			this.$share_button.parent().addClass('reader-shareable');
-			
-			this.$share_button.on('click', function(){
-				self.share();
-			});
-		},
-		
-		init_comment_button: function() {
-			var self = this;
-			//this.comments.add_button($action, $share_button);
-			//this.comments.show_comments($action);
-			
-			this.$comment_button = this.ui.get_bar_button('Comment');
-		
-			this.$comment_button.on('click', function(){
-				self.add_comment();
-			});
-		
-			this.$comment_button.insertAfter(this.$share_button);
-		
-			//this.display_comments($action);*/
-		},
-		
-		share: function() {
-			this.ui.show_modal(false);
-			this.$share_spinner.css({'opacity':'100'});
-			var self = this,
-				json = this.get_json_href();
+    
+    var Loader = function() {
+        if(typeof unsafeWindow !== 'undefined') {
+            this.body = unsafeWindow.document.body;
+        } else {
+            this.body = document.body;
+        }
+    };
+    
+    Loader.prototype = {
+        addScript: function(url, clazz) {
+            var script = document.createElement('script');
+            script.type = 'text/javascript';
+            script.src = url;
+            
+            if (clazz !== null ) {
+                script.className = 'script-' + clazz;
+            }
+            
+            this.body.appendChild(script);
+        }
+    };
+    
+    var Article = function(factory, loader, $article) {
+        this.ui = factory;
+        this.loader = loader;
+        
+        this.init($article);
+    };
+    
+    Article.prototype = {
+        init: function($article) {
+            var self = this;
+            this.endpoint = 'http://readersharing.net/';
+            this.$container = $article;
+            this.$container.addClass('reader-shareable');
+            
+            //expanded view
+            this.$action_bar = this.$container.parents('.entry').find('.card-actions');
+            
+            //list view
+            if (this.$action_bar.size() < 1) {
+                this.$action_bar = this.$container.parents('.entry').find('.entry-actions');
+            }
+            
+            this.$title = this.$container.find('.entry-title a');
+            this.href = this.$title.attr('href');
+            this.body = this.$container.find('.entry-body').html();
+            this.published_on = this.$container.find('.entry-date').text();
+            
+            this.sha = SHA1(this.href);
+            
+            this.$container.addClass('read-' + this.sha);
+            
+            this.$comments_area = this.ui.get_comments_area(this.$container);
+            
+            this.display_comments();
+            this.init_share_button();
+            this.init_comment_button();
+            
+            //this.ui.show_modal(false);
+            
+            this.$container.parents('.card-common').addClass(this.sha);
+        },
+        
+        init_share_button: function() {
+            var self = this;
+            this.$share_button = this.ui.get_bar_button('ReaderSharing.net');
+            
+            this.$share_button.insertAfter(this.$action_bar.find(".star"));
+            this.$share_spinner = self.ui.get_spinner(self.sha).css({'opacity':'0'});
+            this.$share_spinner.insertAfter(this.$action_bar.find(".star"));
+            this.$share_button.parent().addClass('reader-shareable');
+            
+            this.$share_button.on('click', function(){
+                self.share();
+            });
+        },
+        
+        init_comment_button: function() {
+            var self = this;
+            //this.comments.add_button($action, $share_button);
+            //this.comments.show_comments($action);
+            
+            this.$comment_button = this.ui.get_bar_button('Comment');
+        
+            this.$comment_button.on('click', function(){
+                self.add_comment();
+            });
+        
+            this.$comment_button.insertAfter(this.$share_button);
+        
+            //this.display_comments($action);*/
+        },
+        
+        share: function() {
+            this.ui.show_modal(false);
+            this.$share_spinner.css({'opacity':'100'});
+            var self = this,
+                json = this.get_json_href();
 
-		
-			/*GM_xmlhttpRequest({
-				url: this.post_url + '?' + $.param(json),// + '?callback=?',
-				data : json,
-				method: "GET",
-				onload: function (responseObject){
-					var data = responseObject.responseText;
-					var tmpFunc = new Function(data);
-					tmpFunc(); 
-				},
-				onerror: function () {}
-			});*/
-			var url = this.endpoint + 'share/?' + $.param(json);
-			this.loader.addScript(url, this.sha);
-		},
-		
-		add_comment: function() {
-			this.ui.show_modal(false);
-			var self = this;
-			if (this.$comments_area.find('.add_comment').size() === 0) {
-				var $add_button = this.ui.get_add_comment();	
-				$add_button.find('.submit').on('click', function(event){
-					event.preventDefault();
-					var spinner = self.ui.get_spinner(self.sha);
-					$(this).after(spinner);
-					var json = self.get_json_href();
-					
-					json.comment = $(this).parents('.add_comment').find('textarea').val();
-					var url = self.endpoint + 'comment/?' + $.param(json);
-					
-					self.loader.addScript(url, this.sha);
-				});
-				this.$comments_area.append($add_button);
-			}
-		},
-		
-		display_comments: function() {
-			var json = this.get_json_href();
-			var url = this.endpoint + 'comments/?' + $.param(json);
-			this.loader.addScript(url, this.sha);
-		},
-		
-		get_json_data: function() {
-			var json = {
-					'url': this.href,
-					'body': this.body,
-					'published_on': this.published_on,
-					'title': this.$title.text(),
-					'auth': GM_getValue("greader_key"),
-					'sha': this.sha
-					//'callback': myFunction
-			};
-			
-			return json;
-		},
-		
-		get_json_href: function() {
-			var json = {
-					'url': this.href,
-					'sha': this.sha,
-					'auth': GM_getValue("greader_key")
-			};
-			
-			return json;
-		},
-		
-		destroy: function() {
-			$($('.script-' + this.sha)).remove();
-			this.$share_button.remove();
-			this.$comment_button.remove();
-		},
-		
-		exists: function() {
-			return $('div .read-' + this.sha).size() > 0;
-		}
-	};
-	
-	var ReaderUI = function(base_url) {
-		this.base_url = base_url;
-	};
-	
-	ReaderUI.prototype = {
-		get_bar_button: function(text) {
-			return $('<span class="item-link link reader-sharing"><span class="link unselectable">' + text + '</span></span>').clone();
-		},
-		
-		get_comment_area: function() {
-			return $('<div class="card-comments"><div class="entry-comments"></div></div>').clone();
-		},
-		
-		get_add_comment: function() {
-			var html = '<div class="add_comment">' + 
-					   '<div>' +
-					   '<textarea rows="2" cols="40">' +
-					   '</textarea>' +
-					   '  </div>' +
-					   '  <div>' +
-					   '    <input class="submit" type="submit" value="Add Comment" />' +
-					   '  </div>' +
-					   '</div>';
-			return $(html).clone();
-		},
-		
-		get_spinner: function(sha) {
-			var html = '<img src="' + this.base_url + 'media/images/loader.gif" class="spinner-' + sha + '"/>';
-			return $(html).clone();
-		},
-		
-		get_comments_area: function($elm) {
-			var $comments_area = $elm.parents('.entry').find('.entry-comments');
-			//just in case gogle rips it out
-			if ($comments_area.size() < 1) {
-				$comments_area = this.get_comment_area();
-				$elm.parents('.card').find('.card-actions').before($comments_area);
-			}
-			/*else {
-				$comments_area.html('alaready there');
-			}*/
-			
-			return $comments_area;
-		},
-		
-		show_modal: function(force) {
-			if (GM_getValue("greader_key") === '' || GM_getValue("greader_key") === null || GM_getValue("greader_key") === 'undefined'|| GM_getValue("greader_key") === undefined || force) {
-				if (Modernizr.localstorage) {
-					var key = prompt('Please enter your auth key', GM_getValue("greader_key"));
-					if (key !== null && key !== '') {
-						GM_setValue("greader_key", key);
-					}
-				} else {
-					alert("Your browser does not support local storage which Reader Sharing needs. Please upgrade your browser to one of these: Firefox 3.5+, Safari 4+, IE8+, Chrome 4+");
-				}
-			}
-		}
-	};
-	
-	var ReaderSharing = function(base_url) {
-		var self = this;
-		self.base_url = base_url;
-		this.settingsShown = false;
-		this.check_ui_load();
-		this.articles = [];
-		
-		/** may need something for clicking to new feeds but scrolling tends to take care of it
-		$('#viewer-container').livequery(function() {
-		});**/
+        
+            /*GM_xmlhttpRequest({
+                url: this.post_url + '?' + $.param(json),// + '?callback=?',
+                data : json,
+                method: "GET",
+                onload: function (responseObject){
+                    var data = responseObject.responseText;
+                    var tmpFunc = new Function(data);
+                    tmpFunc(); 
+                },
+                onerror: function () {}
+            });*/
+            var url = this.endpoint + 'share/?' + $.param(json);
+            this.loader.addScript(url, this.sha);
+        },
+        
+        add_comment: function() {
+            this.ui.show_modal(false);
+            var self = this;
+            if (this.$comments_area.find('.add_comment').size() === 0) {
+                var $add_button = this.ui.get_add_comment();    
+                $add_button.find('.submit').on('click', function(event){
+                    event.preventDefault();
+                    var spinner = self.ui.get_spinner(self.sha);
+                    $(this).after(spinner);
+                    var json = self.get_json_href();
+                    
+                    json.comment = $(this).parents('.add_comment').find('textarea').val();
+                    var url = self.endpoint + 'comment/?' + $.param(json);
+                    
+                    self.loader.addScript(url, this.sha);
+                });
+                this.$comments_area.append($add_button);
+            }
+        },
+        
+        display_comments: function() {
+            var json = this.get_json_href();
+            var url = this.endpoint + 'comments/?' + $.param(json);
+            this.loader.addScript(url, this.sha);
+        },
+        
+        get_json_data: function() {
+            var json = {
+                    'url': this.href,
+                    'body': this.body,
+                    'published_on': this.published_on,
+                    'title': this.$title.text(),
+                    'auth': GM_getValue("greader_key"),
+                    'sha': this.sha
+                    //'callback': myFunction
+            };
+            
+            return json;
+        },
+        
+        get_json_href: function() {
+            var json = {
+                    'url': this.href,
+                    'sha': this.sha,
+                    'auth': GM_getValue("greader_key")
+            };
+            
+            return json;
+        },
+        
+        destroy: function() {
+            $($('.script-' + this.sha)).remove();
+            this.$share_button.remove();
+            this.$comment_button.remove();
+        },
+        
+        exists: function() {
+            return $('div .read-' + this.sha).size() > 0;
+        }
+    };
+    
+    var ReaderUI = function(base_url) {
+        this.base_url = base_url;
+    };
+    
+    ReaderUI.prototype = {
+        get_bar_button: function(text) {
+            return $('<span class="item-link link reader-sharing"><span class="link unselectable">' + text + '</span></span>').clone();
+        },
+        
+        get_comment_area: function() {
+            return $('<div class="card-comments"><div class="entry-comments"></div></div>').clone();
+        },
+        
+        get_add_comment: function() {
+            var html = '<div class="add_comment">' + 
+                       '<div>' +
+                       '<textarea rows="2" cols="40">' +
+                       '</textarea>' +
+                       '  </div>' +
+                       '  <div>' +
+                       '    <input class="submit" type="submit" value="Add Comment" />' +
+                       '  </div>' +
+                       '</div>';
+            return $(html).clone();
+        },
+        
+        get_spinner: function(sha) {
+            var html = '<img src="' + this.base_url + 'media/images/loader.gif" class="spinner-' + sha + '"/>';
+            return $(html).clone();
+        },
+        
+        get_comments_area: function($elm) {
+            var $comments_area = $elm.parents('.entry').find('.entry-comments');
+            //just in case gogle rips it out
+            if ($comments_area.size() < 1) {
+                $comments_area = this.get_comment_area();
+                $elm.parents('.card').find('.card-actions').before($comments_area);
+            }
+            /*else {
+                $comments_area.html('alaready there');
+            }*/
+            
+            return $comments_area;
+        },
+        
+        show_modal: function(force) {
+            if (GM_getValue("greader_key") === '' || GM_getValue("greader_key") === null || GM_getValue("greader_key") === 'undefined'|| GM_getValue("greader_key") === undefined || force) {
+                if (Modernizr.localstorage) {
+                    var key = window.prompt('Please enter your auth key', GM_getValue("greader_key"));
+                    if (key !== null && key !== '') {
+                        GM_setValue("greader_key", key);
+                    }
+                } else {
+                    window.alert("Your browser does not support local storage which Reader Sharing needs. Please upgrade your browser to one of these: Firefox 3.5+, Safari 4+, IE8+, Chrome 4+");
+                }
+            }
+        }
+    };
+    
+    var ReaderSharing = function(base_url) {
+        var self = this;
+        self.base_url = base_url;
+        this.settingsShown = false;
+        this.check_ui_load();
+        this.articles = [];
+        
+        /** may need something for clicking to new feeds but scrolling tends to take care of it
+        $('#viewer-container').livequery(function() {
+        });**/
 
-		this.loader = new Loader();
-		this.ui = new ReaderUI(base_url);
-		this.ui.show_modal(false);
-		
-		self.update_ui();
-		$('#viewer-entries-container').scroll(function() {
-			self.update_ui();
-		});
-	};
+        this.loader = new Loader();
+        this.ui = new ReaderUI(base_url);
+        this.ui.show_modal(false);
+        
+        self.update_ui();
+        $('#viewer-entries-container').scroll(function() {
+            self.update_ui();
+        });
+    };
 
-	ReaderSharing.prototype = {
-		bind_menu: function() {
-			if (!this.settingsShown) {
-				var self = this,
-					$controls = $('#viewer-top-controls'),
-					$button = $('<a href="#">Reader Sharing Settings</a>');
-				
-				$button.on('click', function(){
-					self.ui.show_modal(true);
-				});
-				$button.appendTo($controls);
-				self.settingsShown = true;
-			}
-		},
-		
-		check_ui_load: function() {
-			var self = this;
-			setTimeout(function () {
-				if($('#entries .entry').length === 0) {
-					if (!self.settingsShown) {
-						if($('#no-entries-msg').length !== 0) {
-							self.bind_menu();
-						}
-					}
-					self.check_ui_load();
-				}
-				else{
-					self.bind_menu();
-					self.update_ui();
-					
-					$('.entry-secondary').click(function() {
-						var $clicked = $(this),
-							updateTimer = setInterval(function() {
-								if ($clicked.parents('.entry').find('.entry-container').size() > 0) {
-									clearInterval(updateTimer);
-									self.update_ui();
-								}
-							}, 1);
-					});
-				}
-			}, 100);
-		},
-		
-		update_ui: function () {
-			var self = this;
-			$('.entry-container:not(.reader-shareable)').each(function () {
-				//self.add_button($(this));
-				var article = new Article(self.ui, self.loader, $(this));
-				self.articles.push(article);
-			});
+    ReaderSharing.prototype = {
+        bind_menu: function() {
+            if (!this.settingsShown) {
+                var self = this,
+                    $controls = $('#viewer-top-controls'),
+                    $button = $('<a href="#">Reader Sharing Settings</a>');
+                
+                $button.on('click', function(){
+                    self.ui.show_modal(true);
+                });
+                $button.appendTo($controls);
+                self.settingsShown = true;
+            }
+        },
+        
+        check_ui_load: function() {
+            var self = this;
+            setTimeout(function () {
+                if($('#entries .entry').length === 0) {
+                    if (!self.settingsShown) {
+                        if($('#no-entries-msg').length !== 0) {
+                            self.bind_menu();
+                        }
+                    }
+                    self.check_ui_load();
+                }
+                else{
+                    self.bind_menu();
+                    self.update_ui();
+                    
+                    $('.entry-secondary').click(function() {
+                        var $clicked = $(this),
+                            updateTimer = setInterval(function() {
+                                if ($clicked.parents('.entry').find('.entry-container').size() > 0) {
+                                    clearInterval(updateTimer);
+                                    self.update_ui();
+                                }
+                            }, 1);
+                    });
+                }
+            }, 100);
+        },
+        
+        update_ui: function () {
+            var self = this;
+            $('.entry-container:not(.reader-shareable)').each(function () {
+                //self.add_button($(this));
+                var article = new Article(self.ui, self.loader, $(this));
+                self.articles.push(article);
+            });
 
-			if (self.articles.length > 15) {
-				for (var i = 0; i < self.articles.length; i++) {
-					if (!self.articles[i].exists()) {
-						self.articles[i].destroy();
-						self.articles.remove(i);
-					}
-				}
-			}
-		}
+            if (self.articles.length > 15) {
+                for (var i = 0; i < self.articles.length; i++) {
+                    if (!self.articles[i].exists()) {
+                        self.articles[i].destroy();
+                        self.articles.remove(i);
+                    }
+                }
+            }
+        }
 
-	};
-	
-	$(function(){
-		new ReaderSharing('http://readersharing.net/');
-	});
+    };
+    
+    $(function(){
+        new ReaderSharing('http://readersharing.net/');
+    });
 })(jQuery);
