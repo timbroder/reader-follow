@@ -143,15 +143,24 @@ def get_entry_data(request, url, auth_key, sha=None):
     get_entry_url = "https://www.google.com/reader/api/0/stream/items/contents?freshness=false&client=reader-follow&i=%s"
     find_feed_url = "https://www.google.com/reader/api/0/feed-finder?q=%s" % url
     get_feed_url = "http://www.google.com/reader/atom/feed/%s?n=200"
+    get_entry_url_full = ""
     if sha:
         spinner_off = " jQuery('.spinner-%s').css({'opacity':'0'});" % sha
     else:
         spinner_off = ''
     
+    if debug:
+        print "URL"
+        print url
+        
     try:
         article = Article.objects.get(url=url)
+        if debug:
+            print 'got article'
         return article
     except:
+        if debug:
+            print 'didnt get article'
         article = Article()
     
     try:
@@ -175,7 +184,7 @@ def get_entry_data(request, url, auth_key, sha=None):
                 gd_client.SetAuthSubToken(auth.extra_data['access_token'])
                 search = gd_client.Get(get_id_url)
         except Exception as ee:
-            logging.error("token refresh - %s" % profile.user.username, exc_info=True, extra={'request': request, 'exception': ee})
+            logging.error("token refresh1 - %s" % profile.user.username, exc_info=True, extra={'request': request, 'exception': ee})
             return NottyResponse("auth problems. admin notified, will fix soon!", spinner_off) 
     
     
@@ -194,38 +203,36 @@ def get_entry_data(request, url, auth_key, sha=None):
             soup = Soup(find.__str__())
             links = soup.findAll('ns0:link')
             for link in links:
-                if link['rel'] != 'self':
-                    found = False
-                    get_feed_url = get_feed_url % link['href']
-                    
-                    if debug:
-                        print "TRY SEARCH2b %s" % get_feed_url
-                    
-                    
-                    #print get_feed_url % link['href']
-                    #print rss.__str__()
-                    continuation = ''
-                    found = False
-                    for i in range (1,10):
-                        if found:
+                if link['rel'] == 'self':
+                    continue
+                found = False
+                get_feed_url = get_feed_url % link['href']
+                
+                if debug:
+                    print "TRY SEARCH2b %s" % get_feed_url
+                
+                
+                continuation = ''
+                found = False
+                for i in range (1,10):
+                    if found:
+                        break
+                    rss = gd_client.Get("%s%s" % (get_feed_url,  continuation))
+                    entries = Soup(rss.__str__())
+                    try:
+                        continuation =  "&c=%s" % entries.findAll('ns2:continuation')[0].contents[0]
+                    except:
+                        continuation = ''
+ 
+                    for entry in entries.findAll('ns0:link', recursive=True): #, {'ns2:crawl-timestamp-msec': True}): #, { 'ns2:original-id': True }):
+                        if url in entry['href']:
+                            found = True
+                            get_entry_url_full = get_entry_url % entry.previousSibling.find('ns0:id', { 'ns2:original-id': True }).contents[0]
                             break
-                        rss = gd_client.Get("%s%s" % (get_feed_url,  continuation))
-                        entries = Soup(rss.__str__())
-                        try:
-                            continuation =  "&c=%s" % entries.findAll('ns2:continuation')[0].contents[0]
-                        except:
-                            continuation = ''
-                            break
-
-                        for entry in entries.findAll('ns0:id', { 'ns2:original-id': True }):
-                            if url in entry['ns2:original-id']:
-                                found = True
-                                get_entry_url_full = get_entry_url % entry.contents[0]
-                                break
-                    else:
-                        if not found:
-                            logging.error("article search - %s" % profile.user.username, exc_info=True, extra={'request': request })
-                            return NottyResponse("there was an error finding this in reader. admin notified, will fix soon!", spinner_off)
+            else:
+                if not found:
+                    logging.error("article search - %s" % profile.user.username, exc_info=True, extra={'request': request })
+                    return NottyResponse("there was an error finding this in reader. admin notified, will fix soon!", spinner_off)
         except Exception as e:
             if debug:
                 print 'Error on search'
@@ -238,17 +245,20 @@ def get_entry_data(request, url, auth_key, sha=None):
             
         entry = gd_client.Get(get_entry_url_full, converter=str)
     except Exception as e:
+        if debug:
+            print "TOKEN REFRESH2"
         try:
             if True: #'Token invalid' in e.args[0]['reason'] or True:
                 logging.info("refreshing token - %s" % profile.user.username, exc_info=True, extra={'request': request, 'exception': e })
                 auth = refresh_token(auth)
                 gd_client.SetAuthSubToken(auth.extra_data['access_token'])
-                search = gd_client.Get(get_id_url)
+                entry = gd_client.Get(get_entry_url_full, converter=str)
         except Exception as ee:
-            logging.error("token refresh - %s" % profile.user.username, exc_info=True, extra={'request': request, 'exception': ee})
+            if debug:
+                print ee
+            logging.error("token refresh3 - %s" % profile.user.username, exc_info=True, extra={'request': request, 'exception': ee})
             return NottyResponse("auth problems. admin notified, will fix soon!", spinner_off) 
         
-            
     json = simplejson.loads(entry.__str__())
 
     try:

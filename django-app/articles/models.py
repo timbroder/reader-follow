@@ -7,8 +7,8 @@ from django.http import HttpResponse
 
 # Create your models here.
 class Article(models.Model):
-    title = models.CharField(max_length=255, unique=True)
-    url = models.URLField()
+    title = models.CharField(max_length=255)
+    url = models.URLField(unique=True, max_length=255)
     
     #his really should join o a domain object, don't care atm
     domain = models.URLField(blank=True, null=True)
