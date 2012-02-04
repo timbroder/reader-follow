@@ -35,6 +35,7 @@ from django.utils.html import escape
 import logging
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
+import re, string
 
 debug = getattr(settings, 'DEBUG', None)
 
@@ -142,25 +143,21 @@ def get_entry_data(request, url, auth_key, sha=None):
     get_id_url = "https://www.google.com/reader/api/0/search/items/ids?q=%s" % url
     get_entry_url = "https://www.google.com/reader/api/0/stream/items/contents?freshness=false&client=reader-follow&i=%s"
     find_feed_url = "https://www.google.com/reader/api/0/feed-finder?q=%s" % url
-    get_feed_url = "http://www.google.com/reader/atom/feed/%s?n=200"
+    get_feed_url = "http://www.google.com/reader/atom/feed/%s?n=100"
     get_entry_url_full = ""
     if sha:
         spinner_off = " jQuery('.spinner-%s').css({'opacity':'0'});" % sha
     else:
         spinner_off = ''
     
-    if debug:
-        print "URL"
-        print url
-        
+    print "URL"
+    print url
     try:
         article = Article.objects.get(url=url)
-        if debug:
-            print 'got article'
+        print 'got article'
         return article
     except:
-        if debug:
-            print 'didnt get article'
+        print 'didnt get article'
         article = Article()
     
     try:
@@ -201,6 +198,7 @@ def get_entry_data(request, url, auth_key, sha=None):
                 print "TRY SEARCH2a %s" % find_feed_url
             find = gd_client.Get(find_feed_url)
             soup = Soup(find.__str__())
+            print soup
             links = soup.findAll('ns0:link')
             for link in links:
                 if link['rel'] == 'self':
@@ -212,23 +210,75 @@ def get_entry_data(request, url, auth_key, sha=None):
                     print "TRY SEARCH2b %s" % get_feed_url
                 
                 
+                #print get_feed_url % link['href']
+                #print rss.__str__()
                 continuation = ''
                 found = False
-                for i in range (1,10):
+                dammit = 0
+                for i in range (1,2):
                     if found:
                         break
                     rss = gd_client.Get("%s%s" % (get_feed_url,  continuation))
+                    #print rss
                     entries = Soup(rss.__str__())
                     try:
                         continuation =  "&c=%s" % entries.findAll('ns2:continuation')[0].contents[0]
                     except:
                         continuation = ''
- 
+                      #  break
+                    # print entries
+                    #print entries
+                    #continue
+                    #for entry in entries.findAll('ns0:id', { 'ns2:original-id': True }):
+                     #   print entry
+                        #if url in entry['ns2:original-id']:
+                    #        found = True
+                    #        get_entry_url_full = get_entry_url % entry.contents[0]
+                    #            break
+                    #print entries.prettify()
                     for entry in entries.findAll('ns0:link', recursive=True): #, {'ns2:crawl-timestamp-msec': True}): #, { 'ns2:original-id': True }):
+                        #print 'entry'
+                        
+                        #pass
                         if url in entry['href']:
+                         #   print url
+                            print entry.prettify()
+                            print "\n\n\n"
+                            print entry.previousSibling.find('ns0:id', { 'ns2:original-id': True }).contents[0]
                             found = True
                             get_entry_url_full = get_entry_url % entry.previousSibling.find('ns0:id', { 'ns2:original-id': True }).contents[0]
                             break
+                            #found = True
+                           # print entry['href']
+                            #print entry.find('ns0:id')
+                            #print ''
+                            #print ''
+                            #print ''
+                            
+                            
+                            
+                        #print entry.prettify()
+                        #print entry.text
+                        dammit = dammit + 1
+                       # if dammit > 8:
+                            
+                            #break
+                    #        print 'YAY'
+                    #        print entry.find('ns0:id')
+                            #found = True
+                             #get_entry_url_full = get_entry_url % entry.find('ns0:id')
+                    #        break
+                       # print entry.findAll('ns0:link')
+                       # print entry.findAll('ns1:link')
+                       # print entry.findAll('ns2:link')
+                        #if url in entry['ns2:original-id']:
+                        #    found = True
+                        #    get_entry_url_full = get_entry_url % entry.contents[0]
+                           # break
+                    
+                    print "ANOTHER LOOP"
+                    #for entry in entries.findAll('entry'):
+                     #   print entry
             else:
                 if not found:
                     logging.error("article search - %s" % profile.user.username, exc_info=True, extra={'request': request })
@@ -254,11 +304,11 @@ def get_entry_data(request, url, auth_key, sha=None):
                 gd_client.SetAuthSubToken(auth.extra_data['access_token'])
                 entry = gd_client.Get(get_entry_url_full, converter=str)
         except Exception as ee:
-            if debug:
-                print ee
+            print ee
             logging.error("token refresh3 - %s" % profile.user.username, exc_info=True, extra={'request': request, 'exception': ee})
             return NottyResponse("auth problems. admin notified, will fix soon!", spinner_off) 
         
+    print "!!" + get_entry_url_full            
     json = simplejson.loads(entry.__str__())
 
     try:
@@ -301,8 +351,8 @@ def get_entry_data(request, url, auth_key, sha=None):
         return article
     except Exception:
         raise
-        #print 'catastrophic error'
-        #print Exception
+        print 'catastrophic error'
+        print Exception
         return None
     
 
@@ -338,7 +388,7 @@ def share(request):
     if not share_article(article, profile):
         return NottyResponse("already shared", spinner_off)
     else:
-        return NottyResponse("shared: %s" % article.title, spinner_off)
+        return NottyResponse("shared: %s" % re.sub(r'\W+', ' ', article.title), spinner_off)
     
     return HttpResponse("1")
 
