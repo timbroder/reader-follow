@@ -27,10 +27,24 @@ class UsersSharedFeed(ArticleFeed):
         return obj.get_absolute_url()
     
     def description(self, obj):
-        return "Shared on Google Reader"
+        return "Shared on Google Reader by ReaderSharing.net"
     
+    def item_title(self, item):
+        return item.article.title
+
+    def item_link(self, item):
+        return item.article.url
+
+    def item_description(self, item):
+        site = Site.objects.get(id=settings.SITE_ID)
+        return "Shared by: <a href=\"http://%s/shared/%s/\">%s</a><br>From: <a href=\"%s\">%s</a><br><br>%s" % (site.domain, item.userprofile.user.email, item.userprofile.user.username, item.article.domain, item.article.domain, item.article.body)
+
+    def item_pubdate(self, item):
+        item.shared_on
+
     def items(self, obj):
-        return obj.articles.all()[:100]
+        shared = Shared.objects.filter(userprofile=obj).order_by('-shared_on')[:100]
+        return shared
     
 class FollowingFeed(ArticleFeed):
     def get_object(self, request, email, auth_key):
