@@ -4,6 +4,8 @@ from social_auth.models import UserSocialAuth
 from follow import utils
 import simplejson
 from django.http import HttpResponse
+import settings
+from django.contrib.sites.models import Site
 
 # Create your models here.
 class Article(models.Model):
@@ -41,15 +43,13 @@ class UserProfile(models.Model):
             self.social_auth = None
         self.save()
     
-	def get_domain_url(self):
-		site = Site.objects.get(id=settings.SITE_ID)
-		return "http://%s/" % site.domain
-    
     def get_absolute_url(self):
-        return "%sshared/%s/" % (self.get_domain_url(), self.user.email)
+        site = Site.objects.get(id=settings.SITE_ID)
+        return "%sshared/%s/" % ("http://%s/" % site.domain, self.user.email)
     
     def get_agg_share_url(self):
-        return "%sfeed/%s/%s/" % (self.get_domain_url(), self.user.email, self.auth_key)
+        site = Site.objects.get(id=settings.SITE_ID)
+        return "%sfeed/%s/%s/" % ("http://%s/" % site.domain, self.user.email, self.auth_key)
 
 class Shared(models.Model):
     article = models.ForeignKey(Article)

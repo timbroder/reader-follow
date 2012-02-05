@@ -36,6 +36,7 @@ import logging
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 import re, string
+from django.core.mail import EmailMultiAlternatives
 
 debug = getattr(settings, 'DEBUG', None)
 
@@ -439,24 +440,45 @@ def commenets_email(request, article, comments, by, when):
                 users.append(comment.user)
         emails = [user.email for user in users]
             
-        msg = """
-        <a href=\"%s\">%s</a> commented on an article in Google Reader<br>
-        <a href=\"http://readersharing.net/comment/on/%s/\">%s</a>
-        %s
+        html_msg = """
+        <p><a href="%s">%s</a> commented on an article in Google Reader<br>
+        <a href="http://readersharing.net/comment/on/%s/">%s</a></p>
+        <p>Comment: %s</p>
+        <p>Continue the conversation: <a href="http://readersharing.net/comment/on/%s/">http://readersharing.net/comment/on/%s/</a><br>
+        Commented at: %s</p>
+        """
         
-        Continue the conversation: <a href=\"http://readersharing.net/comment/on/%s/\">http://readersharing.net/comment/on/%s/</a>
+        text_msg = """
+        %s commented on an article in Google Reader
+        Article: %s
+        
+        Comment: %s
+        
+        Continue the conversation: http://readersharing.net/comment/on/%s/
        
         Commented at: %s
         """
         
         subject = "Comment: %s"
         
-        send_mail(subject % article.title, 
-                  #msg % (by.userprofile.get_absolute_url(), by.username, article.title, comment.comment, article.id, when.strftime('%a, %b %d %Y %H:%M')), 
-				  msg % (by.userprofile.get_absolute_url(), by.username, article.id, article.title, comment.comment, article.id, when.strftime('%a, %b %d %Y %H:%M')), 
-                  'follow@readersharing.net',
-                  emails, 
-                  fail_silently=False)
+        #send_mail(subject % article.title, 
+        #           #text_msg % (by.userprofile.get_absolute_url(), by.username, article.id, article.title, comment.comment, article.id, article.id, when.strftime('%a, %b %d %Y %H:%M')), 
+		#		  text_msg % (by.username, article.title, comment.comment, article.id, when.strftime('%a, %b %d %Y %H:%M')), 
+        #          'follow@readersharing.net',
+        #          emails, 
+        #          fail_silently=False)
+        
+        msg = EmailMultiAlternatives(subject % article.title, 
+                                     text_msg % (by.username, article.title, comment.comment, article.id, when.strftime('%a, %b %d %Y %H:%M')), 
+                                     'follow@readersharing.net',
+                                     emails)
+        html_msg = html_msg % (by.userprofile.get_absolute_url(), by.username, article.id, article.title, comment.comment, article.id, article.id, when.strftime('%a, %b %d %Y %H:%M'))
+        print html_msg
+        msg.attach_alternative(html_msg, 
+                               "text/html")
+        msg.send()
+        
+        
 
 @login_required(login_url='/login/google-oauth2/')
 @csrf_protect
