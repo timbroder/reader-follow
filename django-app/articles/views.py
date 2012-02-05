@@ -459,7 +459,7 @@ def commenets_email(request, article, comments, by, when):
         Commented at: %s
         """
         
-        subject = "Comment: %s"
+        subject = "Comment on: %s"
         
         #send_mail(subject % article.title, 
         #           #text_msg % (by.userprofile.get_absolute_url(), by.username, article.id, article.title, comment.comment, article.id, article.id, when.strftime('%a, %b %d %Y %H:%M')), 
