@@ -78,7 +78,7 @@ jQuery.noConflict();
 	Article.prototype = {
 		init: function($article) {
 			var self = this;
-			this.endpoint = 'http://localhost:8000/';
+			this.endpoint = 'http://readersharing.net/';
 			this.$container = $article;
 			this.$container.addClass('reader-shareable');
 			
@@ -376,6 +376,6 @@ jQuery.noConflict();
 	};
 	
 	$(function(){
-		new ReaderSharing('http://localhost:8000/');
+		new ReaderSharing('http://readersharing.net/');
 	});
 })(jQuery);
