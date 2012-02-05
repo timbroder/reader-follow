@@ -40,12 +40,16 @@ class UserProfile(models.Model):
         except:
             self.social_auth = None
         self.save()
-        
+    
+	def get_domain_url(self):
+		site = Site.objects.get(id=settings.SITE_ID)
+		return "http://%s/" % site.domain
+    
     def get_absolute_url(self):
-        return "/shared/%s/" % (self.user.email)
+        return "%sshared/%s/" % (self.get_domain_url(), self.user.email)
     
     def get_agg_share_url(self):
-        return "/feed/%s/%s/" % (self.user.email, self.auth_key)
+        return "%sfeed/%s/%s/" % (self.get_domain_url(), self.user.email, self.auth_key)
 
 class Shared(models.Model):
     article = models.ForeignKey(Article)

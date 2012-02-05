@@ -440,20 +440,20 @@ def commenets_email(request, article, comments, by, when):
         emails = [user.email for user in users]
             
         msg = """
+        <a href=\"%s\">%s</a> commented on an article in Google Reader<br>
+        <a href=\"http://readersharing.net/comment/on/%s/\">%s</a>
         %s
-        %s commented on an article in Google Reader
         
-        %s
-        
-        Continue the conversation: http://readersharing.net/comment/on/%s/
+        Continue the conversation: <a href=\"http://readersharing.net/comment/on/%s/\">http://readersharing.net/comment/on/%s/</a>
        
-        (%s)
+        Commented at: %s
         """
         
         subject = "Comment: %s"
         
         send_mail(subject % article.title, 
-                  msg % (article.title, by.username, comment.comment, article.id, when), 
+                  #msg % (by.userprofile.get_absolute_url(), by.username, article.title, comment.comment, article.id, when.strftime('%a, %b %d %Y %H:%M')), 
+				  msg % (by.userprofile.get_absolute_url(), by.username, article.id, article.title, comment.comment, article.id, when.strftime('%a, %b %d %Y %H:%M')), 
                   'follow@readersharing.net',
                   emails, 
                   fail_silently=False)
