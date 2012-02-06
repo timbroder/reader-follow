@@ -473,7 +473,6 @@ def commenets_email(request, article, comments, by, when):
                                      'follow@readersharing.net',
                                      emails)
         html_msg = html_msg % (by.userprofile.get_absolute_url(), by.username, article.id, article.title, comment.comment, article.id, article.id, when.strftime('%a, %b %d %Y %H:%M'))
-        print html_msg
         msg.attach_alternative(html_msg, 
                                "text/html")
         msg.send()
