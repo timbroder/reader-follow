@@ -37,6 +37,8 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 import re, string
 from django.core.mail import EmailMultiAlternatives
+from view_cache_utils import cache_page_with_prefix
+from django.utils.hashcompat import md5_constructor
 
 debug = getattr(settings, 'DEBUG', None)
 
@@ -393,11 +395,29 @@ def share(request):
     
     return HttpResponse("1")
 
-def get_comments(article, data):
-
-    
-    articleType = ContentType.objects.get(app_label="articles", model="article")
-    comments = Comment.objects.select_related('user').filter(content_type=articleType, object_pk=article.id, is_removed=False)
+def get_comments(article, user, data):
+    variables = ["comment_cache_%s-%s" % (article.id, user.id),] 
+    hash = md5_constructor(u':'.join([urlquote(var) for var in variables]))
+    cache_key = variables #'template.cache.%s.%s' % ('commentson', hash.hexdigest())
+    cache.delete(cache_key)
+    print "get comments cache key %s" % cache_key
+    comments = cache.get(cache_key)
+    if not comments:
+        print 'not comments'
+        following = Follow.objects.filter(user=user)
+        users = [follow.target for follow in following]
+        users.append(user)
+        articleType = ContentType.objects.get(app_label="articles", model="article")
+        comments = Comment.objects.select_related('user').filter(user__in=users, content_type=articleType, object_pk=article.id, is_removed=False)
+        cache.set(cache_key, comments, 86400)
+        print cache.get(cache_key)
+        #time.sleep(26)
+        print cache.get(cache_key)
+    else:
+        print "have comments"
+        
+    #print "comment cache"
+    #print comment_cache
     
     return { 'article': article, 'comment_list': comments, 'sha': data['sha'] }
 
@@ -411,10 +431,10 @@ def comments(request):
     except Article.DoesNotExist:
         return HttpResponse("0")
 
-    return r2r('comments.js', get_comments(article, data))
+    return r2r('comments.js', get_comments(article, request.user, data))
 
 def add_comment(request, article, profile, c):
-    variables = [article.id,] 
+    variables = ["comment_cache_%s-%s" % (article.id, profile.user.id),] 
     hash = md5_constructor(u':'.join([urlquote(var) for var in variables]))
     cache_key = 'template.cache.%s.%s' % ('comments', hash.hexdigest())
     cache.delete(cache_key)
@@ -477,15 +497,21 @@ def commenets_email(request, article, comments, by, when):
                                "text/html")
         msg.send()
         
-        
+def cache_map(request):
+    key = md5_constructor("comment_cache_%s-%s" % (request.get_full_path(), request.user.id)).hexdigest()
+    print key
+    return key
 
 @login_required(login_url='/login/google-oauth2/')
 @csrf_protect
+@cache_page_with_prefix(60*15, cache_map)
 def comment_on(request, article_id):
+    print md5_constructor("comment_cache_%s-%s" % (request.get_full_path(), request.user.id)).hexdigest()
     profile = request.user.userprofile
     article = get_object_or_404(Article, id=article_id)
     data = { 'sha': None }
-    c = get_comments(article, data)
+    print "comment on"
+    c = get_comments(article, request.user, data)
     c.update(csrf(request))
     
     if request.method == 'POST':
@@ -529,7 +555,7 @@ def comment(request):
     comment = add_comment(request, article, profile, data['comment'])
     
     #show updated comments
-    comments = get_comments(article, data)
+    comments = get_comments(article, profile.user, data)
     tmpl = loader.get_template('comments.js')
     rendered = tmpl.render(Context(comments)) + remove_spinner
     

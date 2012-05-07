@@ -2,12 +2,12 @@
 {% block title%}Add Comment {% endblock %}
 {% load cache %}
 {% block content %}
-{% cache 86400 commenton article.id %}
+{#% cache 86400 commenton article.id %#}
 {% for comment in comment_list %}
 	<p>{{ comment.user.username }} <em>({{ comment.submit_date }})</em></p>
 	<p>{{ comment.comment }}</p>
 {% endfor %}
-{% endcache %}
+{#% endcache %#}
 <form id="add_comment" method="POST" action=".">{% csrf_token %}
 	<div class="add_comment">
 		<div>
