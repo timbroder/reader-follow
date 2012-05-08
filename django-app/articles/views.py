@@ -39,6 +39,7 @@ import re, string
 from django.core.mail import EmailMultiAlternatives
 from view_cache_utils import cache_page_with_prefix
 from django.utils.hashcompat import md5_constructor
+import httplib
 
 debug = getattr(settings, 'DEBUG', None)
 
@@ -135,12 +136,12 @@ def post(request):
     except Exception as e:
         logout(request)
         logging.error('bad auth key', exc_info=True, extra={'request': request, 'exception': e})
-        return NottyResponse('bad auth key')
+        return NottyResponse('Bad auth key')
 
     if not share_article(article, profile):
-        return NottyResponse("already shared") 
+        return NottyResponse("Already shared") 
     else:
-        return NottyResponse("shared: %s" % article.title)
+        return NottyResponse("Shared: %s" % article.title)
 
 def get_entry_data(request, url, auth_key, sha=None):
     get_id_url = "https://www.google.com/reader/api/0/search/items/ids?q=%s" % url
@@ -153,14 +154,21 @@ def get_entry_data(request, url, auth_key, sha=None):
     else:
         spinner_off = ''
     
-    print "URL"
-    print url
+    if debug:
+        print "URL"
+        print url
+        
     try:
         article = Article.objects.get(url=url)
-        print 'got article'
-        return article
+        
+        if debug:
+            print 'got article'
+            
+        return article, None
     except:
-        print 'didnt get article'
+        if debug:
+            print 'didnt get article'
+            
         article = Article()
     
     try:
@@ -168,7 +176,7 @@ def get_entry_data(request, url, auth_key, sha=None):
         auth = UserSocialAuth.objects.get(user=profile.user)
     except Exception as e:
         logging.error('there seems to be an error with your auth key or account', exc_info=True, extra={'request': request, 'exception': e})
-        return NottyResponse("there seems to be an error with your auth key or account", spinner_off)
+        return NottyResponse("There seems to be an error with your auth key or account", spinner_off), None
 
     gd_client = service.ContactsService()
     gd_client.debug = 'true'
@@ -185,7 +193,7 @@ def get_entry_data(request, url, auth_key, sha=None):
                 search = gd_client.Get(get_id_url)
         except Exception as ee:
             logging.error("token refresh1 - %s" % profile.user.username, exc_info=True, extra={'request': request, 'exception': ee})
-            return NottyResponse("auth problems. admin notified, will fix soon!", spinner_off) 
+            return NottyResponse("Auth problems. admin notified, will fix soon!", spinner_off), None
     
     
     try:
@@ -197,11 +205,15 @@ def get_entry_data(request, url, auth_key, sha=None):
         get_entry_url_full = get_entry_url % entry_id
     except:
         try:
+            found = False
             if debug:
                 print "TRY SEARCH2a %s" % find_feed_url
             find = gd_client.Get(find_feed_url)
             soup = Soup(find.__str__())
-            print soup
+            
+            if debug:
+                print soup
+                
             links = soup.findAll('ns0:link')
             for link in links:
                 if link['rel'] == 'self':
@@ -239,17 +251,38 @@ def get_entry_data(request, url, auth_key, sha=None):
                     #        get_entry_url_full = get_entry_url % entry.contents[0]
                     #            break
                     #print entries.prettify()
+                    if debug:
+                        print url
+                    if "feedproxy.google.com" in url:
+                        request = urllib2.Request(url)
+                        opener = urllib2.build_opener()
+                        f = opener.open(request)
+                        url = f.url.split("?")[0]
+                        print url
                     for entry in entries.findAll('ns0:link', recursive=True): #, {'ns2:crawl-timestamp-msec': True}): #, { 'ns2:original-id': True }):
                         #print 'entry'
                         
                         #pass
                         if url in entry['href']:
-                         #   print url
-                            print entry.prettify()
-                            print "\n\n\n"
-                            print entry.previousSibling.find('ns0:id', { 'ns2:original-id': True }).contents[0]
-                            found = True
-                            get_entry_url_full = get_entry_url % entry.previousSibling.find('ns0:id', { 'ns2:original-id': True }).contents[0]
+                            if debug:
+                                print url
+                                print 'in href?'
+                                print entry.prettify()
+                                print "\n\n\n"
+                                print entry.previousSibling.prettify()
+                                print "\n\n\n"
+                                
+                            try:
+                                if debug:
+                                    print entry.previousSibling.find('ns0:id', { 'ns2:original-id': True }).contents[0]
+                                get_entry_url_full = get_entry_url % entry.previousSibling.find('ns0:id', { 'ns2:original-id': True }).contents[0]
+                                found = True
+                            except:
+                                if debug:
+                                    print entry.previousSibling.find('ns0:id', { 'ns1:original-id': True }).contents[0]
+                                get_entry_url_full = get_entry_url % entry.previousSibling.find('ns0:id', { 'ns1:original-id': True }).contents[0]
+                                found = True
+                            
                             break
                             #found = True
                            # print entry['href']
@@ -278,19 +311,29 @@ def get_entry_data(request, url, auth_key, sha=None):
                         #    found = True
                         #    get_entry_url_full = get_entry_url % entry.contents[0]
                            # break
-                    
-                    print "ANOTHER LOOP"
+                    if debug:
+                        print "ANOTHER LOOP"
                     #for entry in entries.findAll('entry'):
                      #   print entry
             else:
                 if not found:
+                    return NottyResponse('fuck')
+                    article.title = url
+                    article.published_on = datetime.datetime.now()
+                    article.url = url
+                    article.save()
                     logging.error("article search - %s" % profile.user.username, exc_info=True, extra={'request': request })
-                    return NottyResponse("there was an error finding this in reader. admin notified, will fix soon!", spinner_off)
+                    return NottyResponse("There was an error finding this in Google Reader\'s Database. We've shared the url so your friends can see it. The Admin has been notified", spinner_off), article
         except Exception as e:
             if debug:
                 print 'Error on search'
+
+            article.title = url
+            article.published_on = datetime.datetime.now()
+            article.url = url
+            article.save()
             logging.error("article search - %s" % profile.user.username, exc_info=True, extra={'request': request, 'exception': e})
-            return NottyResponse("there was an error finding this in reader. admin notified, will fix soon!", spinner_off) 
+            return NottyResponse("There was an error finding this in Google Reader\'s Database. We've shared the url so your friends can see it. The Admin has been notified", spinner_off), article
     
     try:
         if debug:
@@ -307,11 +350,13 @@ def get_entry_data(request, url, auth_key, sha=None):
                 gd_client.SetAuthSubToken(auth.extra_data['access_token'])
                 entry = gd_client.Get(get_entry_url_full, converter=str)
         except Exception as ee:
-            print ee
+            if debug:
+                print ee
             logging.error("token refresh3 - %s" % profile.user.username, exc_info=True, extra={'request': request, 'exception': ee})
-            return NottyResponse("auth problems. admin notified, will fix soon!", spinner_off) 
+            return NottyResponse("Auth problems. admin notified, will fix soon!", spinner_off), None
         
-    print "!!" + get_entry_url_full            
+    if debug:
+        print "!!" + get_entry_url_full            
     json = simplejson.loads(entry.__str__())
 
     try:
@@ -351,12 +396,13 @@ def get_entry_data(request, url, auth_key, sha=None):
         article.published_on = datetime.datetime.fromtimestamp(int(item['published'])).strftime('%Y-%m-%d %H:%M:%S')
         article.url = url
         article.save()
-        return article
+        return article, None
     except Exception:
         raise
-        print 'catastrophic error'
-        print Exception
-        return None
+        if debug:
+            print 'catastrophic error'
+            print Exception
+        return None, None
     
 
 def share(request):
@@ -376,34 +422,48 @@ def share(request):
     except:
         logout(request)
         logging.error("bad auth key", exc_info=True, extra={'request': request })
-        return NottyResponse('bad auth key, please check readersharing.net', spinner_off)
+        return NottyResponse('Bad auth key, please check readersharing.net', spinner_off)
 
     try:
-        article = get_entry_data(request, data['url'], data['auth'], data['sha'])
+        (article, backup) = get_entry_data(request, data['url'], data['auth'], data['sha'])
     except Article.DoesNotExist as e:
         logging.error("share article - %s" % profile.user.username, exc_info=True, extra={'request': request, 'exception': e})
-        return NottyResponse("not shared yet, fix this", spinner_off)
+        return NottyResponse("Not shared yet, fix this", spinner_off)
     
     if isinstance(article, NottyResponse):
+        if debug:
+            print backup
+        if backup is not None:
+            if not share_article(backup, profile):
+                return NottyResponse("Already shared", spinner_off)
+            else:
+                if debug:
+                    print 'returning artnot?'
+                    print article.__class__
+                return article
+                return article
+                
         logging.error("share article - %s" % profile.user.username, exc_info=True, extra={'request': request })
         return article
 
     if not share_article(article, profile):
-        return NottyResponse("already shared", spinner_off)
+        return NottyResponse("Already shared", spinner_off)
     else:
-        return NottyResponse("shared: %s" % re.sub(r'\W+', ' ', article.title), spinner_off)
+        return NottyResponse("Shared: %s" % re.sub(r'\W+', ' ', article.title), spinner_off)
     
     return HttpResponse("1")
 
 def get_comments(article, user, data):
-    variables = ["comment_cache_%s-%s" % (article.id, user.id),] 
+    variables = ["comment_cache_%s-%s" % (article.id, user.id),]
     hash = md5_constructor(u':'.join([urlquote(var) for var in variables]))
     cache_key = variables #'template.cache.%s.%s' % ('commentson', hash.hexdigest())
     cache.delete(cache_key)
-    print "get comments cache key %s" % cache_key
+    if debug:
+        print "get comments cache key %s" % cache_key
     comments = cache.get(cache_key)
     if not comments:
-        print 'not comments'
+        if debug:
+            print 'not comments'
         following = Follow.objects.filter(user=user)
         users = [follow.target for follow in following]
         users.append(user)
@@ -414,12 +474,16 @@ def get_comments(article, user, data):
         #time.sleep(26)
         print cache.get(cache_key)
     else:
-        print "have comments"
-        
-    #print "comment cache"
-    #print comment_cache
+        if debug:
+            print "have comments"
     
     return { 'article': article, 'comment_list': comments, 'sha': data['sha'] }
+    
+def cache_map(request):
+    key = md5_constructor("comment_cache_%s-%s" % (request.get_full_path(), request.user.id)).hexdigest()
+    if debug:
+        print key
+    return key
 
 def comments(request):
     data = request.GET
@@ -431,10 +495,10 @@ def comments(request):
     except Article.DoesNotExist:
         return HttpResponse("0")
 
-    return r2r('comments.js', get_comments(article, request.user, data))
+    return r2r('comments.js', get_comments(article, data))
 
 def add_comment(request, article, profile, c):
-    variables = ["comment_cache_%s-%s" % (article.id, profile.user.id),] 
+    variables = [article.id,] 
     hash = md5_constructor(u':'.join([urlquote(var) for var in variables]))
     cache_key = 'template.cache.%s.%s' % ('comments', hash.hexdigest())
     cache.delete(cache_key)
@@ -483,7 +547,7 @@ def commenets_email(request, article, comments, by, when):
         
         #send_mail(subject % article.title, 
         #           #text_msg % (by.userprofile.get_absolute_url(), by.username, article.id, article.title, comment.comment, article.id, article.id, when.strftime('%a, %b %d %Y %H:%M')), 
-		#		  text_msg % (by.username, article.title, comment.comment, article.id, when.strftime('%a, %b %d %Y %H:%M')), 
+        #          text_msg % (by.username, article.title, comment.comment, article.id, when.strftime('%a, %b %d %Y %H:%M')), 
         #          'follow@readersharing.net',
         #          emails, 
         #          fail_silently=False)
@@ -493,25 +557,21 @@ def commenets_email(request, article, comments, by, when):
                                      'follow@readersharing.net',
                                      emails)
         html_msg = html_msg % (by.userprofile.get_absolute_url(), by.username, article.id, article.title, comment.comment, article.id, article.id, when.strftime('%a, %b %d %Y %H:%M'))
+        if debug:
+            print html_msg
         msg.attach_alternative(html_msg, 
                                "text/html")
         msg.send()
         
-def cache_map(request):
-    key = md5_constructor("comment_cache_%s-%s" % (request.get_full_path(), request.user.id)).hexdigest()
-    print key
-    return key
+        
 
 @login_required(login_url='/login/google-oauth2/')
 @csrf_protect
-@cache_page_with_prefix(60*15, cache_map)
 def comment_on(request, article_id):
-    print md5_constructor("comment_cache_%s-%s" % (request.get_full_path(), request.user.id)).hexdigest()
     profile = request.user.userprofile
     article = get_object_or_404(Article, id=article_id)
     data = { 'sha': None }
-    print "comment on"
-    c = get_comments(article, request.user, data)
+    c = get_comments(article, data)
     c.update(csrf(request))
     
     if request.method == 'POST':
@@ -532,30 +592,31 @@ def comment(request):
     remove_spinner = " jQuery('.spinner-%s').remove();" % data['sha']
     
     try:
-        article = get_entry_data(request, data['url'], data['auth'], data['sha'])
+        article, backup = get_entry_data(request, data['url'], data['auth'], data['sha'])
     except Article.DoesNotExist as e:
         logging.error("comment, unshared article", exc_info=True, extra={'request': request, 'exception': e})
-        return NottyResponse("not shared yet, fix this", remove_spinner)
+        return NottyResponse("Not shared yet, fix this", remove_spinner)
 
     if isinstance(article, NottyResponse):
         logging.error("comment", exc_info=True, extra={'request': request })
-        return article
+        article = backup
+        #return article
     
     if not Article:
         logging.error("comment, no article", exc_info=True, extra={'request': request })
-        return NottyResponse("there was an error", remove_spinner)
+        return NottyResponse("There was an error", remove_spinner)
         
     try:
         profile = UserProfile.objects.get(auth_key=data['auth'])
     except Exception as e:
         logging.info("bad auth key", exc_info=True, extra={'request': request, 'exception': e})
-        return NottyResponse('bad auth key, please check readersharing.net', remove_spinner)
+        return NottyResponse('Bad auth key, please check readersharing.net', remove_spinner)
     
     share_article(article, profile)
     comment = add_comment(request, article, profile, data['comment'])
     
     #show updated comments
-    comments = get_comments(article, profile.user, data)
+    comments = get_comments(article, data)
     tmpl = loader.get_template('comments.js')
     rendered = tmpl.render(Context(comments)) + remove_spinner
     
@@ -673,7 +734,8 @@ def home(request):
     return contacts(request)
 
 def session_expires(request):
-    print "EXPIRE"
+    if debug:
+        print "EXPIRE"
     request.session.set_expiry(900)
     return redirect('/')
 
@@ -691,10 +753,11 @@ def reader_subscribe(request, email):
     try:
         response = urllib2.urlopen(req)
     except Exception as e:
-        print 'dead on token'
-        print e.code
-        print e.hdrs
-        print e.read()
+        if debug:
+            print 'dead on token'
+            print e.code
+            print e.hdrs
+            print e.read()
     
     the_page = response.read()
     action_token = "%s" % the_page
@@ -718,10 +781,11 @@ def reader_subscribe(request, email):
     try:
         response = urllib2.urlopen(req)
     except Exception as e:
-        print "BAD BAD add"
-        print e.code
-        print e.hdrs
-        print e.read()
+        if debug:
+            print "BAD BAD add"
+            print e.code
+            print e.hdrs
+            print e.read()
     resp_str = "%s" % response.read()
     json = simplejson.loads(resp_str)
     if json['numResults'] == 0 or json['numResults'] == '0':
