@@ -877,7 +877,7 @@ def follow(request, email):
                   'follow@readersharing.net',
                   [following.email], 
                   fail_silently=False)
-        
+    messages.success(request, "Followed %s" % email)    
     return redirect('/')
 
 @login_required(login_url='/login/google-oauth2/')
@@ -893,7 +893,8 @@ def unfollow(request, email):
         utils.unfollow(user, following)
     except:
         pass
-        
+    
+    messages.success(request, "Unfollowed %s" % email)    
     return redirect('/')
 
 
