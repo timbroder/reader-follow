@@ -103,7 +103,7 @@ MIDDLEWARE_CLASSES = (
     'openid_consumer.middleware.OpenIDMiddleware',
     'waffle.middleware.WaffleMiddleware',
     'raven.contrib.django.middleware.Sentry404CatchMiddleware',
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
+    #'debug_toolbar.middleware.DebugToolbarMiddleware',
 )
 
 ROOT_URLCONF = 'urls'
@@ -133,7 +133,7 @@ INSTALLED_APPS = (
     'django_ses',
     'google_analytics',
     'django.contrib.comments',
-    'debug_toolbar',
+    #'debug_toolbar',
     'sentry',
     'raven.contrib.django',
     'django.contrib.messages',
