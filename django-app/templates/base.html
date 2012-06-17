@@ -5,7 +5,6 @@
 <!--[if IE 8 ]>    <html class="no-js ie8" lang="en"> <![endif]-->
 <!--[if (gte IE 9)|!(IE)]><!--> <html class="no-js" lang="en"> <!--<![endif]-->
 
-{% load analytics %}
 
 <head>
 	<meta charset="utf-8">
@@ -59,7 +58,7 @@
 	</div> <!--! end of #container -->
 	
 	<!-- do same for jquery ui -->
-	<script src="/media/js/reader.js"></script>
+	<script src="http://cdnjs.cloudflare.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
     <script src="/media/js/plugins.js"></script>
     {% block extrajs %}{% endblock %}
     
@@ -68,6 +67,5 @@
     </script>
 
 	<!-- end scripts-->
-    {% analytics %}
 </body>
 </html>

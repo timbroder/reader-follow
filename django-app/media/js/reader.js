@@ -5,7 +5,6 @@
 
 jQuery.noConflict();
 (function($) { 
-	
 	/*!
 	 * jQuery Notty
 	 * http://www.userdot.net/#!/jquery
@@ -78,7 +77,7 @@ jQuery.noConflict();
 	Article.prototype = {
 		init: function($article) {
 			var self = this;
-			this.endpoint = 'http://readersharing.net/';
+			this.endpoint = 'http://localhost:8000/';
 			this.$container = $article;
 			this.$container.addClass('reader-shareable');
 			
@@ -107,12 +106,12 @@ jQuery.noConflict();
 			
 			//this.ui.show_modal(false);
 			
-			//this.$container.parents('.card-common').addClass(this.sha);
+			this.$container.parents('.card-common').addClass(this.sha);
 		},
 		
 		init_share_button: function() {
 			var self = this;
-			this.$share_button = this.ui.get_bar_button('ReaderSharing.net');
+			this.$share_button = this.ui.get_bar_button('localhost:8000');
 			
 			this.$share_button.insertAfter(this.$action_bar.find(".star"));
 			this.$share_spinner = self.ui.get_spinner(self.sha).css({'opacity':'0'});
@@ -157,6 +156,7 @@ jQuery.noConflict();
 				onerror: function () {}
 			});*/
 			var url = this.endpoint + 'share/?' + $.param(json);
+			console.log(url);
 			this.loader.addScript(url, this.sha);
 		},
 		
@@ -175,7 +175,7 @@ jQuery.noConflict();
 					
 					json.comment = $(this).parents('.add_comment').find('textarea').val();
 					var url = self.endpoint + 'comment/?' + $.param(json);
-					
+					console.log(url);
                     self.loader.addScript(url, this.sha);
 				});
 				this.$comments_area.append($add_button);
@@ -239,7 +239,7 @@ jQuery.noConflict();
 		get_add_comment: function() {
 			var html = '<div class="add_comment">' + 
 					   '<div>' +
-					   '<textarea rows="2" cols="40">' +
+					   '<textarea rows="2" cols="40" class="commentinput">' +
 					   '</textarea>' +
 					   '  </div>' +
 					   '  <div>' +
@@ -280,7 +280,7 @@ jQuery.noConflict();
 		show_modal: function(force) {
 			if (GM_getValue("greader_key") === '' || GM_getValue("greader_key") === null || GM_getValue("greader_key") === 'undefined'|| GM_getValue("greader_key") === undefined || force) {
 				if (Modernizr.localstorage) {
-					var key = prompt('Please enter your auth key', GM_getValue("greader_key"));
+					var key = prompt('Please enter your Reader Sharing auth key', GM_getValue("greader_key"));
 					if (key !== null && key !== '') {
 						GM_setValue("greader_key", key);
 					}
@@ -376,6 +376,6 @@ jQuery.noConflict();
 	};
 	
 	$(function(){
-		new ReaderSharing('http://readersharing.net/');
+		new ReaderSharing('http://localhost:8000/');
 	});
 })(jQuery);

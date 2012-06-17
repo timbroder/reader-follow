@@ -254,6 +254,8 @@ def get_entry_data(request, url, auth_key, sha=None):
                     if debug:
                         print url
                     if "feedproxy.google.com" in url:
+                        if debug:
+                            print 'feed proxy'
                         request = urllib2.Request(url)
                         opener = urllib2.build_opener()
                         f = opener.open(request)
@@ -274,11 +276,13 @@ def get_entry_data(request, url, auth_key, sha=None):
                                 
                             try:
                                 if debug:
+                                    print 'ns2'
                                     print entry.previousSibling.find('ns0:id', { 'ns2:original-id': True }).contents[0]
                                 get_entry_url_full = get_entry_url % entry.previousSibling.find('ns0:id', { 'ns2:original-id': True }).contents[0]
                                 found = True
                             except:
                                 if debug:
+                                    print 'ns1'
                                     print entry.previousSibling.find('ns0:id', { 'ns1:original-id': True }).contents[0]
                                 get_entry_url_full = get_entry_url % entry.previousSibling.find('ns0:id', { 'ns1:original-id': True }).contents[0]
                                 found = True
@@ -317,7 +321,6 @@ def get_entry_data(request, url, auth_key, sha=None):
                      #   print entry
             else:
                 if not found:
-                    return NottyResponse('fuck')
                     article.title = url
                     article.published_on = datetime.datetime.now()
                     article.url = url
@@ -453,26 +456,65 @@ def share(request):
     
     return HttpResponse("1")
 
-def get_comments(article, user, data):
+def f5(seq, idfun=None): 
+   # order preserving
+   if idfun is None:
+       def idfun(x): return x
+   seen = {}
+   result = []
+   for item in seq:
+       marker = idfun(item)
+       # in old Python versions:
+       # if seen.has_key(marker)
+       # but in new ones:
+       if marker in seen: continue
+       seen[marker] = 1
+       result.append(item)
+   return result
+
+def get_comments(article, data, flush_cache=False):
+    user = UserProfile.objects.get(auth_key=data['auth']).user
     variables = ["comment_cache_%s-%s" % (article.id, user.id),]
     hash = md5_constructor(u':'.join([urlquote(var) for var in variables]))
     cache_key = variables #'template.cache.%s.%s' % ('commentson', hash.hexdigest())
-    cache.delete(cache_key)
+    if flush_cache:
+        cache.delete(cache_key)
     if debug:
         print "get comments cache key %s" % cache_key
     comments = cache.get(cache_key)
     if not comments:
-        if debug:
-            print 'not comments'
+        print 'user'
+        print user
+        
+        print 'following'
         following = Follow.objects.filter(user=user)
+        print following
+        
+        print 'followed'
+        followed = Follow.objects.filter(target_user=user)
+        print followed
+        
         users = [follow.target for follow in following]
+        print 'users'
+        print users
+        
+        print 'users2'
+        #print users.append(follow.user) for follow in followed
+        users.extend([follow.user for follow in followed])
         users.append(user)
+        print users
+        #users = f5(users)
         articleType = ContentType.objects.get(app_label="articles", model="article")
         comments = Comment.objects.select_related('user').filter(user__in=users, content_type=articleType, object_pk=article.id, is_removed=False)
+        print "set comments cache key %s" % cache_key
         cache.set(cache_key, comments, 86400)
-        print cache.get(cache_key)
-        #time.sleep(26)
-        print cache.get(cache_key)
+        if debug:
+            print 'not comments'
+            print following
+            print users
+            print cache.get(cache_key)
+            #time.sleep(26)
+            print cache.get(cache_key)
     else:
         if debug:
             print "have comments"
@@ -616,7 +658,7 @@ def comment(request):
     comment = add_comment(request, article, profile, data['comment'])
     
     #show updated comments
-    comments = get_comments(article, data)
+    comments = get_comments(article, data, True)
     tmpl = loader.get_template('comments.js')
     rendered = tmpl.render(Context(comments)) + remove_spinner
     
