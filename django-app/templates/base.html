@@ -23,10 +23,8 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	
 	<!-- CSS: implied media="all" -->
-	<link rel="stylesheet" href="/media/css/base.css">
-	
-	<!-- Uncomment if you are specifically targeting less enabled mobile browsers
-	<link rel="stylesheet" media="handheld" href="/static/css/handheld.css?v=2">  -->
+	<!-- <link rel="stylesheet" href="/media/css/base.css"> -->
+	<link rel="stylesheet" href="http://current.bootstrapcdn.com/bootstrap-v204/css/bootstrap-combined.min.css">
 	
     {% block extracss %}{% endblock %}
 
@@ -35,11 +33,11 @@
 
 </head>
 <body>
-	<div id="container">
-		<header>  
+	<div id="container" class="container">
+		<header class="hero-unit">  
 	        <h1><a href="/">Reader Sharing: Start Following again</a></h1> 
 	    </header>  
-		<div id="content">
+		<div  id="content">
 			<div id="main" role="main">
 				{% if messages %}
 					<ul class="messages">
@@ -53,12 +51,14 @@
 		</div> 
   
 	    <footer>  
+	       <hr>
 	    	<p>Contact: <a href="mailto:tim@readersharing.net">email</a>, <a href="http://twitter.com/broderboy">twitter</a>, <a href="http://timbroder.com">web</a>, <a href="https://github.com/broderboy/reader-follow">source code</a></p>
 	    </footer>  
 	</div> <!--! end of #container -->
 	
 	<!-- do same for jquery ui -->
 	<script src="http://cdnjs.cloudflare.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<script src="http://current.bootstrapcdn.com/bootstrap-v204/js/bootstrap.min.js"></script>
     <script src="/media/js/plugins.js"></script>
     {% block extrajs %}{% endblock %}
     
