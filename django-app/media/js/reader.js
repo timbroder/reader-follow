@@ -77,7 +77,7 @@ jQuery.noConflict();
 	Article.prototype = {
 		init: function($article) {
 			var self = this;
-			this.endpoint = 'http://localhost:8000/';
+			this.endpoint = 'http://readersharing.net/';
 			this.$container = $article;
 			this.$container.addClass('reader-shareable');
 			
@@ -111,7 +111,7 @@ jQuery.noConflict();
 		
 		init_share_button: function() {
 			var self = this;
-			this.$share_button = this.ui.get_bar_button('localhost:8000');
+			this.$share_button = this.ui.get_bar_button('ReaderSharing.net');
 			
 			this.$share_button.insertAfter(this.$action_bar.find(".star"));
 			this.$share_spinner = self.ui.get_spinner(self.sha).css({'opacity':'0'});
@@ -376,6 +376,6 @@ jQuery.noConflict();
 	};
 	
 	$(function(){
-		new ReaderSharing('http://localhost:8000/');
+		new ReaderSharing('http://readersharing.net/');
 	});
 })(jQuery);
