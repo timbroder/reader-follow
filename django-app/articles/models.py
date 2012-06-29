@@ -90,7 +90,7 @@ class GoogleContact:
 
 
 class NottyResponse(HttpResponse):
-    notty = "jQuery.notty({ content : \"%s\", timeout: 3000 }); "
+    notty = "jQuery.notty({ content : \"%s\", timeout: 5000 }); "
     def __init__(self, data, extra=None):
         data = self.notty % (data)
         if extra:
