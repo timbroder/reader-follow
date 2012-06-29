@@ -596,7 +596,7 @@ def commenets_email(request, article, comments, by, when):
         
         msg = EmailMultiAlternatives(subject % article.title, 
                                      text_msg % (by.username, article.title, comment.comment, article.id, when.strftime('%a, %b %d %Y %H:%M')), 
-                                     'follow@readersharing.net',
+                                     'Reader Sharing <readersharing@readersharing.net>',
                                      emails)
         html_msg = html_msg % (by.userprofile.get_absolute_url(), by.username, article.id, article.title, comment.comment, article.id, article.id, when.strftime('%a, %b %d %Y %H:%M'))
         if debug:
@@ -874,7 +874,7 @@ def follow(request, email):
         subject = "%s is now following you on Google Reader"
         send_mail(subject % user.username, 
                   msg % user.username, 
-                  'follow@readersharing.net',
+                  'Reader Sharing <readersharing@readersharing.net>',
                   [following.email], 
                   fail_silently=False)
     messages.success(request, "Followed %s" % email)    
