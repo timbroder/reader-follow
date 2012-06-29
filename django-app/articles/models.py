@@ -11,6 +11,7 @@ from django.contrib.sites.models import Site
 class Article(models.Model):
     title = models.CharField(max_length=255)
     url = models.URLField(unique=True, max_length=255)
+    lookup_url = models.URLField(unique=True, max_length=255, blank=True, null=True)
     
     #his really should join o a domain object, don't care atm
     domain = models.URLField(blank=True, null=True)
@@ -24,6 +25,11 @@ class Article(models.Model):
     
     def get_absolute_url(self):
         return self.url
+    
+    def save(self):
+        if not self.lookup_url:
+            self.lookup_url = self.url
+        return super(Article, self).save()
     
 class UserProfile(models.Model):
     user = models.OneToOneField(User)

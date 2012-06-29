@@ -40,6 +40,7 @@ from django.core.mail import EmailMultiAlternatives
 from view_cache_utils import cache_page_with_prefix
 from django.utils.hashcompat import md5_constructor
 import httplib
+from django.db import IntegrityError
 
 debug = getattr(settings, 'DEBUG', None)
 
@@ -159,7 +160,8 @@ def get_entry_data(request, url, auth_key, sha=None):
         print url
         
     try:
-        article = Article.objects.get(url=url)
+        print "trying to get %s" %url
+        article = Article.objects.get(lookup_url=url)
         
         if debug:
             print 'got article'
@@ -170,6 +172,7 @@ def get_entry_data(request, url, auth_key, sha=None):
             print 'didnt get article'
             
         article = Article()
+        article.lookup_url = url
     
     try:
         profile = UserProfile.objects.get(auth_key=auth_key)
@@ -398,7 +401,10 @@ def get_entry_data(request, url, auth_key, sha=None):
         article.title = item['title']
         article.published_on = datetime.datetime.fromtimestamp(int(item['published'])).strftime('%Y-%m-%d %H:%M:%S')
         article.url = url
-        article.save()
+        try:
+            article.save()
+        except IntegrityError:
+            article = Article.objects.get(url=article.url)
         return article, None
     except Exception:
         raise
