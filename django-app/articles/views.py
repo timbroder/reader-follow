@@ -604,7 +604,9 @@ def commenets_email(request, article, comments, by, when):
                                      text_msg % (by.username, article.title, comment.comment, article.id, when.strftime('%a, %b %d %Y %H:%M')), 
                                      'Reader Sharing <readersharing@readersharing.net>',
                                      emails)
-        html_msg = html_msg % (by.userprofile.get_absolute_url(), by.username, article.id, article.title, comment.comment, article.id, article.id, when.strftime('%a, %b %d %Y %H:%M'))
+        print by
+        
+        html_msg = html_msg % (comment.user.userprofile.get_absolute_url(), by.username, article.id, article.title, comment.comment, article.id, article.id, when.strftime('%a, %b %d %Y %H:%M'))
         if debug:
             print html_msg
         msg.attach_alternative(html_msg, 
