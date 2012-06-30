@@ -3,29 +3,30 @@ import settings
 from django.contrib import admin
 admin.autodiscover()
 
-from articles import views as articles
 from articles import feeds
+from articles.views import FollowAllView, SessionExpiresView, FollowView, UnfollowView, HomeView, PostView, ShareView
+from articles.views import CommentOnView, CommentView, CommentsView, GetArticleView
 
 urlpatterns = patterns('',
     url(r'^admin/', include(admin.site.urls)),
     (r'^comments/', include('django.contrib.comments.urls')),
     
-    (r'^follow/all/$', articles.followall),
-    (r'^accounts/expire/$', articles.session_expires),
-    (r'^follow/(?P<email>.+)/$', articles.follow),
-    (r'^unfollow/(?P<email>.+)/$', articles.unfollow),
+    (r'^follow/all/$', FollowAllView.as_view()),
+    (r'^accounts/expire/$', SessionExpiresView.as_view()),
+    (r'^follow/(?P<email>.+)/$', FollowView.as_view()),
+    (r'^unfollow/(?P<email>.+)/$', UnfollowView.as_view()),
     (r'^shared/(?P<email>.+)/$', feeds.UsersSharedFeed()),
     (r'^feed/(?P<email>.+)/(?P<auth_key>.+)/$', feeds.FollowingFeed()),
     
-    (r'^post/$', articles.post),
-    (r'^share/$', articles.share),
-    (r'^comment/on/(?P<article_id>.+)/$', articles.comment_on),
-    (r'^comment/$', articles.comment),
-    (r'^comments/$', articles.comments),
-    (r'^get/(?P<article_id>\d+)/$', articles.get),
+    (r'^post/$', PostView.as_view()),
+    (r'^share/$', ShareView.as_view()),
+    (r'^comment/on/(?P<article_id>.+)/$', CommentOnView.as_view()),
+    (r'^comment/$', CommentView.as_view()),
+    (r'^comments/$', CommentsView.as_view()),
+    (r'^get/(?P<article_id>\d+)/$', GetArticleView.as_view()),
     url(r'', include('social_auth.urls')),
     url('^', include('follow.urls')),
-    (r'^$', articles.home),
+    (r'^$', HomeView.as_view()),
 )
 
 print settings.MEDIA_ROOT
