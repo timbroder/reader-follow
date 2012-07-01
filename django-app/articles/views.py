@@ -231,10 +231,30 @@ class ShareComments(Invalids):
     def commenets_email(self, request, article, comments, by, when):
         if waffle.flag_is_active(request, 'commentemail'):
             users = []
+            #self.debug(request.user)
+            self.debug(by.__class__)
+            self.debug('START1')
             for comment in comments:
-                if comment.user not in users and comment.user != request.user:
+                #self.debug(comment.user != by)
+                ##self.debug(comment.user.username)
+                #self.debug(by)
+                if comment.user not in users and comment.user != by:
                     users.append(comment.user)
-            emails = [user.email for user in users]
+                 
+            self.debug('START2') 
+            self.debug(article.id)  
+            self.debug(Shared.objects.filter(article=article))
+            self.debug(users)
+            users = [share.userprofile.user.id for share in Shared.objects.filter(article=article)] + users
+            self.debug('START3')
+            self.debug(users)          
+            following = Follow.objects.filter(target_user__in=users, user=by)        
+                    
+            emails = [follow.target_user.email for follow in following]  
+            
+            self.debug("USER EMAILZ")
+            self.debug(users)
+            self.debug(emails)
                 
             html_msg = """
             <p><a href="%s">%s</a> commented on an article in Google Reader<br>
@@ -263,18 +283,23 @@ class ShareComments(Invalids):
             #          'follow@readersharing.net',
             #          emails, 
             #          fail_silently=False)
-            
-            msg = EmailMultiAlternatives(subject % article.title, 
-                                         text_msg % (by.username, article.title, comment.comment, article.id, when.strftime('%a, %b %d %Y %H:%M')), 
-                                         'Reader Sharing <readersharing@readersharing.net>',
-                                         emails)
-            self.debug("ShareComments.comments_email :: by %s" % by)
-            
             html_msg = html_msg % (comment.user.userprofile.get_absolute_url(), by.username, article.id, article.title, comment.comment, article.id, article.id, when.strftime('%a, %b %d %Y %H:%M'))
-            self.debug("ShareComments.comments_email :: html %s" % html_msg)
-            msg.attach_alternative(html_msg, 
-                                   "text/html")
-            msg.send()
+            for email in emails:
+                msg = EmailMultiAlternatives(subject % article.title, 
+                                             text_msg % (by.username, article.title, comment.comment, article.id, when.strftime('%a, %b %d %Y %H:%M')), 
+                                             'Reader Sharing <readersharing@readersharing.net>',
+                                             [email,])
+                self.debug("ShareComments.comments_email :: by %s" % by)
+                
+                
+                self.debug("ShareComments.comments_email :: html %s" % html_msg)
+                msg.attach_alternative(html_msg, 
+                                       "text/html")
+                try:
+                    msg.send()
+                    self.debug("sent to %s" % email)
+                except:
+                    pass
             
     def invalid_comment(self, data):
         tests = ['url', 'auth', 'comment']
@@ -327,7 +352,7 @@ class CommentOnView(DebugView, ShareComments):
             comment = request.POST['comment']
             comment = self.add_comment(request, article, profile, comment)
             
-            self.commenets_email(request, article, c['comment_list'], request.user, comment.submit_date)
+            self.commenets_email(request, article, c['comment_list'], profile.user, comment.submit_date)
     
         return render_to_response('add_comment.html', c)
     
@@ -369,7 +394,7 @@ class CommentView(DebugView, ShareComments, Entry):
         tmpl = loader.get_template('comments.js')
         rendered = tmpl.render(Context(comments)) + remove_spinner
         
-        self.commenets_email(request, article, comments['comment_list'], request.user, comment.submit_date)
+        self.commenets_email(request, article, comments['comment_list'], profile.user, comment.submit_date)
         
         return NottyResponse("Comment Added", rendered)
 
