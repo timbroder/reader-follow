@@ -174,8 +174,10 @@ class ShareComments(Invalids):
     def get_comments(self, article, data, flush_cache=False):
         user = UserProfile.objects.get(auth_key=data['auth']).user
         variables = ["comment_cache_%s-%s" % (article.id, user.id),]
-        hash = md5_constructor(u':'.join([urlquote(var) for var in variables]))
+        self.debug(variables)
+        #hash = md5_constructor(u':'.join([urlquote(var) for var in variables]))
         cache_key = variables #'template.cache.%s.%s' % ('commentson', hash.hexdigest())
+        self.debug(cache_key)
         if flush_cache:
             cache.delete(cache_key)
         self.debug("ShareComments.get_comments :: get comments cache key %s" % cache_key)
@@ -210,12 +212,13 @@ class ShareComments(Invalids):
         return { 'article': article, 'comment_list': comments, 'sha': data['sha'] }
 
     def add_comment(self, request, article, profile, c):
-        variables = [article.id,] 
-        hash = md5_constructor(u':'.join([urlquote(var) for var in variables]))
-        cache_key = 'template.cache.%s.%s' % ('comments', hash.hexdigest())
-        cache.delete(cache_key)
-        cache_key = 'template.cache.%s.%s' % ('commenton', hash.hexdigest())
-        cache.delete(cache_key)
+        variables = ["comment_cache_%s-%s" % (article.id, profile.user.id),]
+        #self.debug(variables)
+        #hash = md5_constructor(u':'.join([urlquote(var) for var in variables]))
+        #cache_key = 'template.cache.%s.%s' % ('comments', hash.hexdigest())
+        
+        #cache_key = 'template.cache.%s.%s' % ('commenton', hash.hexdigest())
+        
         
         comment = Comment();
         comment.ip_address = request.META.get("REMOTE_ADDR", None)
@@ -225,7 +228,8 @@ class ShareComments(Invalids):
         comment.object_pk = article.id
         comment.site = Site.objects.get(id=1)
         comment.save()
-        
+        cache.delete(variables)
+        #cache.delete(cache_key)
         return comment
     
     def commenets_email(self, request, article, comments, by, when):
@@ -340,19 +344,28 @@ class CommentsView(DebugView, ShareComments):
 
 class CommentOnView(DebugView, ShareComments):
     @method_decorator(login_required(login_url='/login/google-oauth2/'))
-    @csrf_protect
     def get(self, request, article_id):
         profile = request.user.userprofile
         article = get_object_or_404(Article, id=article_id)
-        data = { 'sha': None }
+        data = { 'sha': None, 'auth': profile.auth_key }
         c = self.get_comments(article, data)
         c.update(csrf(request))
+
+    
+        return render_to_response('add_comment.html', c)
+    
+    def post(self, request, article_id):
+        profile = request.user.userprofile
+        article = get_object_or_404(Article, id=article_id)
+        data = { 'sha': None, 'auth': profile.auth_key }
         
-        if request.method == 'POST':
-            comment = request.POST['comment']
-            comment = self.add_comment(request, article, profile, comment)
+        comment = request.POST['comment']
+        comment = self.add_comment(request, article, profile, comment)
+
+        c = self.get_comments(article, data)
+        c.update(csrf(request))
             
-            self.commenets_email(request, article, c['comment_list'], profile.user, comment.submit_date)
+        self.commenets_email(request, article, c['comment_list'], profile.user, comment.submit_date)
     
         return render_to_response('add_comment.html', c)
     
